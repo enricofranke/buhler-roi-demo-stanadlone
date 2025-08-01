@@ -1,0 +1,1626 @@
+<template>
+  <div class="roi-calculator">
+    <!-- Header Section -->
+    <div class="calculator-header">
+      <div class="header-content">
+        <h2 class="header-title">
+          <i class="pi pi-chart-line" aria-hidden="true"></i>
+          Bühler BRAM Calculator
+        </h2>
+        <p class="header-subtitle">
+          Calculate your potential return on investment with Bühler's service solutions
+        </p>
+      </div>
+      <div class="header-actions">
+        <button 
+          @click="exportToPDF" 
+          class="pdf-export-btn"
+          :disabled="isExporting"
+        >
+          <i class="pi pi-file-pdf" aria-hidden="true"></i>
+          {{ isExporting ? 'Exporting...' : 'Export PDF' }}
+        </button>
+        
+        <div class="header-badge">
+          <span class="badge-label">Estimated Reduction of Downtime Costs</span>
+          <span class="badge-value">
+            {{ formatCurrency(calculations.potentialSavings) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Section -->
+    <div class="calculator-inputs">
+      <div class="input-grid">
+        <!-- Production Parameters -->
+        <div class="input-section">
+          <h3 class="section-title">
+            <i class="pi pi-cog" aria-hidden="true"></i>
+            Production Parameters
+          </h3>
+          
+          <div class="input-group">
+            <label for="machines-in-operation" class="input-label">
+              Machines in Operation
+              <span class="input-hint">Number of machines in your facility</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                id="machines-in-operation"
+                v-model.number="inputs.machinesInOperation"
+                type="number" 
+                class="input-field"
+                min="1"
+                max="100"
+                step="1"
+              />
+              <span class="input-unit">units</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="production-hours" class="input-label">
+              Production Hours per Day
+              <span class="input-hint">Average daily operating hours</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                id="production-hours"
+                v-model.number="inputs.productionHoursPerDay"
+                type="number" 
+                class="input-field"
+                min="1"
+                max="24"
+                step="0.5"
+              />
+              <span class="input-unit">hours</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="daily-output" class="input-label">
+              Daily Output
+              <span class="input-hint">Average production output per day</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                id="daily-output"
+                v-model.number="inputs.dailyOutputKg"
+                type="number" 
+                class="input-field"
+                min="100"
+                max="100000"
+                step="100"
+              />
+              <span class="input-unit">kg</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Downtime Impact -->
+        <div class="input-section">
+          <h3 class="section-title">
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            Downtime Impact
+          </h3>
+          
+          <div class="input-group">
+            <label for="downtime-events" class="input-label">
+              Downtime Events per Machine/Year
+              <span class="input-hint">Average number of unplanned stops</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                id="downtime-events"
+                v-model.number="inputs.downtimeEventsPerMachine"
+                type="number" 
+                class="input-field"
+                min="0"
+                max="365"
+                step="1"
+              />
+              <span class="input-unit">events</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="downtime-duration" class="input-label">
+              Downtime Duration per Event
+              <span class="input-hint">Average hours per downtime event</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                id="downtime-duration"
+                v-model.number="inputs.downtimeDurationPerEvent"
+                type="number" 
+                class="input-field"
+                min="0.5"
+                max="48"
+                step="0.5"
+              />
+              <span class="input-unit">hours</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="downtime-reduction" class="input-label">
+              Estimated Downtime Reduction per Event
+              <span class="input-hint">Hours saved per downtime event with BRAM</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                id="downtime-reduction"
+                v-model.number="inputs.estimatedDowntimeReductionPerEvent"
+                type="number" 
+                class="input-field"
+                min="0"
+                max="100"
+                step="1"
+              />
+              <span class="input-unit">hours</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financial Parameters -->
+        <div class="input-section">
+          <h3 class="section-title">
+            <i class="pi pi-dollar" aria-hidden="true"></i>
+            Financial Parameters
+          </h3>
+          
+          <div class="input-group">
+            <label for="product-margin" class="input-label">
+              Product Margin per kg
+              <span class="input-hint">Profit margin per kg of product</span>
+            </label>
+            <div class="input-wrapper currency">
+              <span class="currency-symbol">$</span>
+              <input 
+                id="product-margin"
+                v-model.number="inputs.productMarginPerKg"
+                type="number" 
+                class="input-field"
+                min="0"
+                max="100"
+                step="0.01"
+              />
+              <span class="input-unit">per kg</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="service-cost" class="input-label">
+              Service Contract Cost
+              <span class="input-hint">Annual service agreement cost</span>
+            </label>
+            <div class="input-wrapper currency">
+              <span class="currency-symbol">$</span>
+              <input 
+                id="service-cost"
+                v-model.number="inputs.serviceContractCost"
+                type="number" 
+                class="input-field"
+                min="0"
+                max="1000000"
+                step="1000"
+              />
+              <span class="input-unit">per year</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+          <!-- Results Section -->
+      <div class="calculator-results">
+        <!-- Current Downtime Impact -->
+        <div class="metrics-section">
+          <h3 class="section-header">Current Downtime Impact</h3>
+        <div class="results-grid">
+          <div class="metric-card warning">
+            <div class="metric-icon">
+              <i class="pi pi-clock" aria-hidden="true"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Annual Downtime</span>
+              <span class="metric-value">{{ formatNumber(calculations.annualDowntimeHours) }}</span>
+              <span class="metric-sublabel">Hours lost per year</span>
+            </div>
+          </div>
+
+          <div class="metric-card info">
+            <div class="metric-icon">
+              <i class="pi pi-box" aria-hidden="true"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Production Loss</span>
+              <span class="metric-value">{{ formatNumber(calculations.annualProductionLoss) }}</span>
+              <span class="metric-sublabel">kg lost per year</span>
+            </div>
+          </div>
+
+          <div class="metric-card danger">
+            <div class="metric-icon">
+              <i class="pi pi-dollar" aria-hidden="true"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">USD Loss per Year</span>
+              <span class="metric-value">{{ formatCurrency(calculations.annualRevenueLoss) }}</span>
+              <span class="metric-sublabel">Revenue lost annually</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Impact of BRAM -->
+      <div class="metrics-section">
+        <h3 class="section-header">Impact of BRAM</h3>
+        <div class="results-grid">
+          <div class="metric-card success">
+            <div class="metric-icon">
+              <i class="pi pi-clock" aria-hidden="true"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Downtime Reduction</span>
+              <span class="metric-value">{{ formatNumber(calculations.additionalUptimeHours) }}</span>
+              <span class="metric-sublabel">Hours saved annually</span>
+            </div>
+          </div>
+
+          <div class="metric-card success">
+            <div class="metric-icon">
+              <i class="pi pi-box" aria-hidden="true"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Reduction of Production Loss</span>
+              <span class="metric-value">{{ formatNumber(calculations.additionalUptimeHours * inputs.dailyOutputKg / inputs.productionHoursPerDay) }}</span>
+              <span class="metric-sublabel">kg saved per year</span>
+            </div>
+          </div>
+
+          <div class="metric-card success">
+            <div class="metric-icon">
+              <i class="pi pi-chart-line" aria-hidden="true"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Reduction of Downtime Costs</span>
+              <span class="metric-value">{{ formatCurrency(calculations.potentialSavings) }}</span>
+              <span class="metric-sublabel">Additional margin per year</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ROI Calculation -->
+      <div class="metrics-section">
+        <h3 class="section-header">ROI Calculation</h3>
+        <div class="results-grid">
+          <div class="metric-card primary">
+            <div class="metric-icon">
+              <i class="pi pi-percentage" aria-hidden="true"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Return on Investment</span>
+              <span class="metric-value">{{ formatPercentage(calculations.roi) }}</span>
+              <span class="metric-sublabel">Annual ROI</span>
+            </div>
+          </div>
+
+          <div class="metric-card info">
+            <div class="metric-icon">
+              <i class="pi pi-calendar" aria-hidden="true"></i>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Payback Period</span>
+              <span class="metric-value">{{ formatMonths(calculations.paybackMonths) }}</span>
+              <span class="metric-sublabel">ROI in years</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detailed Financial Summary -->
+      <div class="financial-summary">
+        <h3 class="summary-title">
+          <i class="pi pi-chart-bar" aria-hidden="true"></i>
+          Detailed Financial Analysis
+        </h3>
+        
+        <!-- Current Situation -->
+        <div class="summary-section">
+          <h4 class="summary-section-title">Current Downtime Impact</h4>
+          <div class="summary-items">
+            <div class="summary-item">
+              <span class="summary-label">Annual Revenue Loss</span>
+              <span class="summary-value negative">{{ formatCurrency(calculations.annualRevenueLoss) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BRAM Impact -->
+        <div class="summary-section">
+          <h4 class="summary-section-title">With BRAM Service</h4>
+          <div class="summary-items">
+            <div class="summary-item">
+              <span class="summary-label">Estimated Reduction of Downtime Costs</span>
+              <span class="summary-value positive">{{ formatCurrency(calculations.potentialSavings) }}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Annual Service Contract Cost</span>
+              <span class="summary-value negative">{{ formatCurrency(inputs.serviceContractCost) }}</span>
+            </div>
+            <div class="summary-item total">
+              <span class="summary-label">Net Annual Benefit</span>
+              <span class="summary-value" :class="{positive: calculations.netSavings > 0, negative: calculations.netSavings < 0}">
+                {{ formatCurrency(calculations.netSavings) }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+              <!-- ROI Visualization -->
+        <div class="chart-container">
+          <h3 class="chart-title">ROI Projection Over Time</h3>
+          <div 
+            ref="chartRef"
+            class="roi-chart"
+          ></div>
+        </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
+
+interface RoiInputs {
+  machinesInOperation: number
+  downtimeEventsPerMachine: number
+  downtimeDurationPerEvent: number
+  productionHoursPerDay: number
+  dailyOutputKg: number
+  productMarginPerKg: number
+  estimatedDowntimeReductionPerEvent: number
+  serviceContractCost: number
+}
+
+interface RoiCalculations {
+  annualDowntimeHours: number
+  annualProductionLoss: number
+  annualRevenueLoss: number
+  additionalUptimeHours: number
+  potentialSavings: number
+  netSavings: number
+  roi: number
+  paybackMonths: number
+}
+
+// Input reactive data (realistic default values)
+const inputs = ref<RoiInputs>({
+  machinesInOperation: 25,
+  downtimeEventsPerMachine: 3,
+  downtimeDurationPerEvent: 8,
+  productionHoursPerDay: 10,
+  dailyOutputKg: 2000,
+  productMarginPerKg: 1.5,
+  estimatedDowntimeReductionPerEvent: 4, // 50% reduction of 8 hours
+  serviceContractCost: 30000
+})
+
+// Chart reference
+const chartRef = ref<HTMLElement>()
+let chartInstance: any = null
+
+// Get echarts instance from plugin
+const { $echarts } = useNuxtApp()
+
+// PDF Export state
+const isExporting = ref(false)
+
+// Computed calculations
+const calculations = computed<RoiCalculations>(() => {
+  const input = inputs.value
+  
+  // === CURRENT DOWNTIME IMPACT ===
+  // C13: Downtime (hours/year) = E3 × E4 × E5
+  // Formula: Downtime events per machine × Duration per event × Machines in operation
+  const annualDowntimeHours = input.downtimeEventsPerMachine * 
+                              input.downtimeDurationPerEvent * 
+                              input.machinesInOperation
+  
+  // Hourly production rate = Total daily output / Production hours per day
+  const hourlyProductionRate = input.dailyOutputKg / input.productionHoursPerDay
+  
+  // C14: Lost Output (kg/year) = Downtime hours × Hourly production rate
+  const annualProductionLoss = annualDowntimeHours * hourlyProductionRate
+  
+  // C15: Downtime cost (USD/year) = Lost Output × Product Margin
+  const annualRevenueLoss = annualProductionLoss * input.productMarginPerKg
+  
+  // === POTENTIAL IMPACT OF BRAM ===
+  // C17: Additional Uptime (hours/year) = E3 × E9 × E5
+  // Formula: Downtime events × Reduction per event × Machines
+  const additionalUptimeHours = input.downtimeEventsPerMachine * 
+                                input.estimatedDowntimeReductionPerEvent * 
+                                input.machinesInOperation
+  
+  // C18: Additional Output (kg/year) = Additional Uptime × Hourly production
+  const additionalOutput = additionalUptimeHours * hourlyProductionRate
+  
+  // C19: Additional Margin (USD/year) = Additional Output × Product Margin
+  const potentialSavings = additionalOutput * input.productMarginPerKg
+  
+  // === ROI CALCULATION ===
+  // C23: Net savings per year = Additional Margin - Service Contract Cost
+  const netSavings = potentialSavings - input.serviceContractCost
+  
+  // C22: ROI in Years = Service Contract Cost / Additional Margin
+  const roiInYears = potentialSavings > 0 
+    ? input.serviceContractCost / potentialSavings 
+    : Infinity
+  
+  // ROI as percentage (inverse of ROI in years × 100)
+  const roi = roiInYears > 0 && roiInYears !== Infinity
+    ? (1 / roiInYears) * 100
+    : 0
+  
+  // Payback period in months
+  const paybackMonths = roiInYears * 12
+  
+  return {
+    annualDowntimeHours,
+    annualProductionLoss,
+    annualRevenueLoss,
+    additionalUptimeHours,
+    potentialSavings,
+    netSavings,
+    roi,
+    paybackMonths
+  }
+})
+
+// Chart options
+const chartOptions = computed(() => {
+  const calc = calculations.value
+  const input = inputs.value
+  
+  // Generate 60-month projection (5 years)
+  const months = Array.from({length: 61}, (_, i) => i) // 0 to 60 months
+  const monthlyGrossSavings = calc.potentialSavings / 12 // Monthly savings from reduced downtime
+  
+  // Calculate cumulative savings accounting for annual service payments
+  const cumulativeSavings = months.map(month => {
+    // Calculate how many years have passed (service paid at start of each year)
+    const yearsPaid = Math.floor(month / 12) + 1 // Always at least 1 year paid
+    const totalServicePaid = yearsPaid * input.serviceContractCost
+    const totalGrossSavings = monthlyGrossSavings * month
+    
+    // Net position = savings - service costs paid
+    return totalGrossSavings - totalServicePaid
+  })
+  
+  return {
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params: any) => {
+        const month = params[0].dataIndex
+        const value = params[0].value
+        const monthlyPotentialSavings = calc.potentialSavings / 12
+        const yearsPaid = Math.floor(month / 12) + 1
+        const totalServicePaid = yearsPaid * input.serviceContractCost
+        const totalGrossSavings = monthlyPotentialSavings * month
+        
+        return `
+          <div style="padding: 10px;">
+            <strong>Month ${month}</strong><br/>
+            Cumulative Net Value: <strong>${formatCurrency(value)}</strong><br/>
+            <hr style="margin: 5px 0; border-color: #e2e8f0;">
+            Total Savings: ${formatCurrency(totalGrossSavings)}<br/>
+            Service Costs Paid: ${formatCurrency(totalServicePaid)}<br/>
+            <small>(${yearsPaid} year${yearsPaid !== 1 ? 's' : ''} × ${formatCurrency(input.serviceContractCost)})</small>
+          </div>
+        `
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: months.map(m => `Month ${m}`),
+      axisLine: {
+        lineStyle: { color: '#e2e8f0' }
+      },
+      axisLabel: {
+        color: '#64748b',
+        interval: 5, // Show every 6th label (0, 6, 12, 18...)
+        rotate: 45
+      }
+    },
+    yAxis: {
+      type: 'value',
+      axisLine: {
+        lineStyle: { color: '#e2e8f0' }
+      },
+      axisLabel: {
+        color: '#64748b',
+        formatter: (value: number) => '$' + (value / 1000).toFixed(0) + 'k'
+      },
+      splitLine: {
+        lineStyle: { color: '#f1f5f9' }
+      }
+    },
+    series: [{
+      name: 'Cumulative Net Savings',
+      type: 'line',
+      data: cumulativeSavings,
+      smooth: true,
+      symbol: 'circle',
+      symbolSize: 8,
+      lineStyle: {
+        width: 3,
+        color: 'var(--buhler-primary)'
+      },
+      itemStyle: {
+        color: 'var(--buhler-primary)',
+        borderWidth: 2,
+        borderColor: '#fff'
+      },
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            { offset: 0, color: 'rgba(0, 155, 145, 0.3)' },
+            { offset: 1, color: 'rgba(0, 155, 145, 0.05)' }
+          ]
+        }
+      },
+      markLine: {
+        data: [
+          {
+            yAxis: 0,
+            label: {
+              formatter: 'Break Even',
+              position: 'end',
+              color: '#64748b'
+            },
+            lineStyle: {
+              color: '#ef4444',
+              type: 'dashed',
+              width: 2
+            }
+          },
+          // Annual payment lines
+          { xAxis: 0, lineStyle: { color: '#ef4444', type: 'solid', width: 1, opacity: 0.3 } },
+          { xAxis: 12, lineStyle: { color: '#ef4444', type: 'solid', width: 1, opacity: 0.3 } },
+          { xAxis: 24, lineStyle: { color: '#ef4444', type: 'solid', width: 1, opacity: 0.3 } },
+          { xAxis: 36, lineStyle: { color: '#ef4444', type: 'solid', width: 1, opacity: 0.3 } },
+          { xAxis: 48, lineStyle: { color: '#ef4444', type: 'solid', width: 1, opacity: 0.3 } }
+        ]
+      },
+      markPoint: {
+        data: [
+          { name: 'Annual fee', xAxis: 0, yAxis: cumulativeSavings[0], symbol: 'none', 
+            label: { formatter: 'Annual fee', position: 'bottom', color: '#ef4444', fontSize: 10 } },
+          { name: 'Annual fee', xAxis: 12, yAxis: cumulativeSavings[12], symbol: 'none',
+            label: { formatter: 'Annual fee', position: 'bottom', color: '#ef4444', fontSize: 10 } },
+          { name: 'Annual fee', xAxis: 24, yAxis: cumulativeSavings[24], symbol: 'none',
+            label: { formatter: 'Annual fee', position: 'bottom', color: '#ef4444', fontSize: 10 } },
+          { name: 'Annual fee', xAxis: 36, yAxis: cumulativeSavings[36], symbol: 'none',
+            label: { formatter: 'Annual fee', position: 'bottom', color: '#ef4444', fontSize: 10 } },
+          { name: 'Annual fee', xAxis: 48, yAxis: cumulativeSavings[48], symbol: 'none',
+            label: { formatter: 'Annual fee', position: 'bottom', color: '#ef4444', fontSize: 10 } }
+        ]
+      }
+    }]
+  }
+})
+
+// Initialize chart
+const initChart = async () => {
+  await nextTick()
+  if (chartRef.value && !chartInstance && $echarts) {
+    chartInstance = $echarts.init(chartRef.value)
+    updateChart()
+  }
+}
+
+// Update chart
+const updateChart = () => {
+  if (chartInstance) {
+    chartInstance.setOption(chartOptions.value)
+  }
+}
+
+// Watch for changes and update chart
+watch([inputs, calculations], updateChart, { deep: true })
+
+// Lifecycle hooks
+onMounted(() => {
+  initChart()
+  
+  // Handle window resize
+  window.addEventListener('resize', () => {
+    if (chartInstance) {
+      chartInstance.resize()
+    }
+  })
+})
+
+// Formatting helpers
+const formatCurrency = (value: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value)
+}
+
+const formatNumber = (value: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(value)
+}
+
+const formatPercentage = (value: number): string => {
+  return value.toFixed(0) + '%'
+}
+
+const formatMonths = (value: number): string => {
+  if (!isFinite(value)) return 'N/A'
+  if (value < 12) return value.toFixed(1) + ' months'
+  return (value / 12).toFixed(1) + ' years'
+}
+
+// Professional PDF Export function with jsPDF - Corporate Quality
+const exportToPDF = async () => {
+  if (isExporting.value) return
+  
+  // Only run on client side
+  if (typeof window === 'undefined') return
+  
+  isExporting.value = true
+  
+  try {
+    // Dynamic import to avoid SSR issues
+    const jsPDF = (await import('jspdf')).default
+    const autoTable = (await import('jspdf-autotable')).default
+    
+    const doc = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4'
+    })
+    
+    // Bühler Corporate Colors
+    const buhlerGreen = [0, 155, 145]
+    const darkGray = [30, 41, 59]
+    const lightGray = [100, 116, 139]
+    const backgroundColor = [248, 250, 252]
+    
+    const calc = calculations.value
+    const input = inputs.value
+    
+    // Header with Bühler Branding
+    doc.setFillColor(...buhlerGreen)
+    doc.rect(0, 0, 210, 25, 'F')
+    
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(24)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Bühler BRAM Calculator', 20, 17)
+    
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'normal')
+    doc.text('ROI Analysis Report', 20, 22)
+    
+    // Report Information
+    let yPos = 40
+    doc.setTextColor(...darkGray)
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })}`, 20, yPos)
+    
+    // Executive Summary Box
+    yPos += 15
+    doc.setFillColor(...backgroundColor)
+    doc.rect(20, yPos - 5, 170, 25, 'F')
+    doc.setDrawColor(...buhlerGreen)
+    doc.setLineWidth(1)
+    doc.rect(20, yPos - 5, 170, 25, 'S')
+    
+    doc.setFontSize(14)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...darkGray)
+    doc.text('Executive Summary', 25, yPos + 3)
+    
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    doc.text(`Estimated Annual Reduction of Downtime Costs: ${formatCurrency(calc.potentialSavings)}`, 25, yPos + 10)
+    doc.text(`ROI: ${formatPercentage(calc.roi)} | Payback Period: ${formatMonths(calc.paybackMonths)}`, 25, yPos + 16)
+    
+    // Input Parameters Table
+    yPos += 35
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...buhlerGreen)
+    doc.text('Input Parameters', 20, yPos)
+    
+    yPos += 5
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Parameter', 'Value', 'Unit']],
+      body: [
+        ['Machines in Operation', input.machinesInOperation.toString(), 'units'],
+        ['Production Hours per Day', input.productionHoursPerDay.toString(), 'hours'],
+        ['Daily Output', formatNumber(input.dailyOutputKg), 'kg'],
+        ['Downtime Events per Machine/Year', input.downtimeEventsPerMachine.toString(), 'events'],
+        ['Downtime Duration per Event', input.downtimeDurationPerEvent.toString(), 'hours'],
+        ['Estimated Downtime Reduction per Event', input.estimatedDowntimeReductionPerEvent.toString(), 'hours'],
+        ['Product Margin per kg', `$${input.productMarginPerKg.toFixed(2)}`, 'per kg'],
+        ['Service Contract Cost', formatCurrency(input.serviceContractCost), 'per year']
+      ],
+      theme: 'grid',
+      headStyles: {
+        fillColor: buhlerGreen,
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: darkGray
+      },
+      alternateRowStyles: {
+        fillColor: backgroundColor
+      },
+      margin: { left: 20, right: 20 }
+    })
+    
+    // Current Downtime Impact
+    yPos = doc.lastAutoTable.finalY + 15
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...buhlerGreen)
+    doc.text('Current Downtime Impact', 20, yPos)
+    
+    yPos += 5
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Metric', 'Annual Impact']],
+      body: [
+        ['Total Downtime Hours', formatNumber(calc.annualDowntimeHours) + ' hours'],
+        ['Production Loss', formatNumber(calc.annualProductionLoss) + ' kg'],
+        ['Revenue Loss', formatCurrency(calc.annualRevenueLoss)]
+      ],
+      theme: 'grid',
+      headStyles: {
+        fillColor: [239, 68, 68], // Red for negative impact
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: darkGray
+      },
+      alternateRowStyles: {
+        fillColor: backgroundColor
+      },
+      margin: { left: 20, right: 20 }
+    })
+    
+    // BRAM Benefits - keep on page 1
+    yPos = doc.lastAutoTable.finalY + 15
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...buhlerGreen)
+    doc.text('Impact of BRAM Service Solution', 20, yPos)
+    
+    yPos += 5
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Benefit', 'Annual Value']],
+      body: [
+        ['Downtime Reduction', formatNumber(calc.additionalUptimeHours) + ' hours'],
+        ['Reduction of Production Loss', formatNumber(calc.additionalUptimeHours * input.dailyOutputKg / input.productionHoursPerDay) + ' kg'],
+        ['Reduction of Downtime Costs', formatCurrency(calc.potentialSavings)]
+      ],
+      theme: 'grid',
+      headStyles: {
+        fillColor: [34, 197, 94], // Green for positive impact
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: darkGray
+      },
+      alternateRowStyles: {
+        fillColor: backgroundColor
+      },
+      margin: { left: 20, right: 20 }
+    })
+    
+    // Start page 2 with Financial Analysis and Chart
+    doc.addPage()
+    yPos = 30
+    
+    // Financial Analysis - now on page 2
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...buhlerGreen)
+    doc.text('Financial Analysis', 20, yPos)
+    
+    yPos += 5
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Financial Metric', 'Value']],
+      body: [
+        ['Estimated Reduction of Downtime Costs', formatCurrency(calc.potentialSavings)],
+        ['Annual Service Contract Cost', formatCurrency(input.serviceContractCost)],
+        ['Net Annual Benefit', formatCurrency(calc.netSavings)],
+        ['Return on Investment (ROI)', formatPercentage(calc.roi)],
+        ['Payback Period', formatMonths(calc.paybackMonths)]
+      ],
+      theme: 'grid',
+      headStyles: {
+        fillColor: buhlerGreen,
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: darkGray
+      },
+      alternateRowStyles: {
+        fillColor: backgroundColor
+      },
+      margin: { left: 20, right: 20 },
+      didParseCell: function (data) {
+        // Highlight the net benefit row
+        if (data.row.index === 2) {
+          if (calc.netSavings > 0) {
+            data.cell.styles.textColor = [34, 197, 94] // Green for positive
+            data.cell.styles.fontStyle = 'bold'
+          } else {
+            data.cell.styles.textColor = [239, 68, 68] // Red for negative
+            data.cell.styles.fontStyle = 'bold'
+          }
+        }
+      }
+    })
+    
+    // ROI Chart - below Financial Analysis on page 2
+    yPos = doc.lastAutoTable.finalY + 20
+    
+    // Chart title on new page
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...buhlerGreen)
+    doc.text('ROI Projection Over Time', 20, yPos)
+    
+    // Debug logging
+    console.log('PDF Export - Chart Debug:', {
+      chartInstance: !!chartInstance,
+      chartRef: !!chartRef.value,
+      chartRefElement: chartRef.value?.tagName
+    })
+    
+    // Export chart as image - with PDF-optimized dimensions
+    if (chartInstance && chartRef.value) {
+      try {
+        // Temporarily resize chart for PDF export with better A4 proportions
+        const pdfChartWidth = 800  // Wider for PDF export
+        const pdfChartHeight = 500 // Better height for A4 format
+        
+        // Store original chart size
+        const originalWidth = chartRef.value.style.width
+        const originalHeight = chartRef.value.style.height
+        
+        // Temporarily resize the chart container for PDF export
+        chartRef.value.style.width = `${pdfChartWidth}px`
+        chartRef.value.style.height = `${pdfChartHeight}px`
+        
+        // Resize the chart instance to match
+        chartInstance.resize({ width: pdfChartWidth, height: pdfChartHeight })
+        
+        // Wait for the resize to complete
+        await new Promise(resolve => setTimeout(resolve, 150))
+        
+        // Export the resized chart
+        const chartDataURL = chartInstance.getDataURL({
+          type: 'png',
+          pixelRatio: 2,
+          backgroundColor: '#ffffff'
+        })
+        
+        // Restore original chart size immediately
+        chartRef.value.style.width = originalWidth
+        chartRef.value.style.height = originalHeight
+        chartInstance.resize()
+        
+        // PDF chart dimensions - properly proportioned for A4
+        const chartWidth = 170  // Full width minus margins
+        const chartHeight = 106 // Perfect 16:10 ratio for A4
+        
+        // Add chart to page 2
+        doc.addImage(chartDataURL, 'PNG', 20, yPos + 10, chartWidth, chartHeight)
+        
+        // Add chart description
+        yPos += chartHeight + 20
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(...lightGray)
+        doc.text('This chart shows the cumulative net savings over a 5-year period, accounting for annual service fees.', 20, yPos)
+        doc.text('Red vertical lines indicate annual service contract payments.', 20, yPos + 5)
+        
+      } catch (chartError) {
+        console.warn('Could not export chart:', chartError)
+        // Restore chart size in case of error
+        if (chartRef.value) {
+          chartRef.value.style.width = ''
+          chartRef.value.style.height = ''
+          if (chartInstance) chartInstance.resize()
+        }
+        // Add placeholder text if chart export fails
+        doc.setFontSize(12)
+        doc.setFont('helvetica', 'italic')
+        doc.setTextColor(...lightGray)
+        doc.text('Chart export failed. The ROI projection shows cumulative savings over 5 years.', 20, yPos + 10)
+      }
+    } else {
+      console.warn('Chart instance not available for PDF export')
+      // Add placeholder text if chart is not available
+      doc.setFontSize(12)
+      doc.setFont('helvetica', 'italic')
+      doc.setTextColor(...lightGray)
+      doc.text('Chart not available. The ROI projection shows cumulative savings over 5 years.', 20, yPos + 10)
+    }
+    
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages()
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i)
+      
+      // Footer background
+      doc.setFillColor(...buhlerGreen)
+      doc.rect(0, 285, 210, 12, 'F')
+      
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.text('Bühler BRAM Calculator - Confidential Business Analysis', 20, 292)
+      doc.text(`Page ${i} of ${pageCount}`, 170, 292)
+    }
+    
+    // Save PDF
+    const filename = `Buhler-BRAM-Analysis-${new Date().toISOString().split('T')[0]}.pdf`
+    doc.save(filename)
+    
+  } catch (error) {
+    console.error('PDF Export failed:', error)
+    alert('PDF Export failed. Please try again.')
+  } finally {
+    isExporting.value = false
+  }
+}
+</script>
+
+<style scoped>
+.roi-calculator {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding: 2rem;
+  background: transparent;
+  min-height: 100%;
+}
+
+/* Header Styles */
+.calculator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.header-content {
+  flex: 1;
+}
+
+.header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+}
+
+.header-title i {
+  color: var(--buhler-primary);
+}
+
+.header-subtitle {
+  font-size: 1.125rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.pdf-export-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border: 2px solid var(--buhler-primary);
+  color: var(--buhler-primary);
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pdf-export-btn:hover:not(:disabled) {
+  background: var(--buhler-primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 155, 145, 0.2);
+}
+
+.pdf-export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pdf-export-btn i {
+  font-size: 1rem;
+}
+
+.header-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, var(--buhler-primary), var(--buhler-primary-700));
+  border-radius: 12px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 155, 145, 0.3);
+}
+
+.badge-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  opacity: 0.9;
+  margin-bottom: 0.25rem;
+}
+
+.badge-value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* Input Section Styles */
+.calculator-inputs {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.input-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 3rem;
+}
+
+.input-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.section-title i {
+  color: var(--buhler-primary);
+  font-size: 1.125rem;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-label {
+  display: flex;
+  flex-direction: column;
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.875rem;
+  gap: 0.25rem;
+}
+
+.input-hint {
+  font-weight: 400;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.input-wrapper:hover {
+  border-color: #cbd5e1;
+}
+
+.input-wrapper:focus-within {
+  border-color: var(--buhler-primary);
+  box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1);
+}
+
+.input-field {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1e293b;
+  outline: none;
+}
+
+.input-field::-webkit-inner-spin-button,
+.input-field::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.input-unit {
+  padding: 0 1rem;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.currency-symbol {
+  padding: 0 0 0 1rem;
+  color: #64748b;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.input-wrapper.currency .input-field {
+  padding-left: 0.5rem;
+}
+
+/* Results Section */
+.calculator-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.metrics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section-header {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  padding: 0 0 0.5rem 0;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.metric-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  font-size: 1.5rem;
+}
+
+.metric-card.primary .metric-icon {
+  background: rgba(0, 155, 145, 0.1);
+  color: var(--buhler-primary);
+}
+
+.metric-card.success .metric-icon {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.metric-card.warning .metric-icon {
+  background: rgba(251, 146, 60, 0.1);
+  color: #fb923c;
+}
+
+.metric-card.info .metric-icon {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.metric-card.positive .metric-icon {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.metric-card.negative .metric-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.metric-card.positive .metric-value {
+  color: #22c55e;
+}
+
+.metric-card.negative .metric-value {
+  color: #ef4444;
+}
+
+.metric-card.danger .metric-icon {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.metric-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metric-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.metric-sublabel {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* Financial Summary */
+.financial-summary {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.summary-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1.5rem 0;
+}
+
+.summary-title i {
+  color: var(--buhler-primary);
+}
+
+.summary-section {
+  margin-bottom: 1.5rem;
+}
+
+.summary-section-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.summary-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+}
+
+.summary-item.total {
+  padding-top: 1.5rem;
+  border-top: 2px solid #e2e8f0;
+  margin-top: 0.5rem;
+}
+
+.summary-label {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.summary-item.total .summary-label {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.125rem;
+}
+
+.summary-value {
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #1e293b;
+}
+
+.summary-value.positive {
+  color: #22c55e;
+}
+
+.summary-value.negative {
+  color: #ef4444;
+}
+
+.summary-item.total .summary-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Chart Container */
+.chart-container {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.chart-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1.5rem 0;
+}
+
+.roi-chart {
+  width: 100%;
+  height: 400px;
+}
+
+/* Responsive Design */
+  @media (max-width: 768px) {
+    .calculator-header {
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .header-actions {
+      flex-direction: column;
+      align-self: stretch;
+    }
+
+    .header-badge {
+      align-self: stretch;
+    }
+
+  .input-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .roi-chart {
+    height: 300px;
+  }
+}
+
+/* PDF Export Styles */
+.roi-calculator.pdf-export {
+  background: white !important;
+  padding: 1rem !important;
+  max-width: none !important;
+  gap: 1.5rem !important;
+}
+
+.roi-calculator.pdf-export * {
+  box-shadow: none !important;
+}
+
+.roi-calculator.pdf-export .calculator-header {
+  background: white !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.roi-calculator.pdf-export .header-actions {
+  display: none !important; /* Hide export button in PDF */
+}
+
+.roi-calculator.pdf-export .calculator-inputs {
+  background: white !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.roi-calculator.pdf-export .input-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
+}
+
+.roi-calculator.pdf-export .input-section {
+  margin-bottom: 0 !important;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.roi-calculator.pdf-export .metrics-section {
+  background: white !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.roi-calculator.pdf-export .results-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1rem !important;
+}
+
+.roi-calculator.pdf-export .metric-card {
+  margin-bottom: 0 !important;
+  padding: 1rem !important;
+  border: 1px solid #f1f5f9 !important;
+  border-radius: 6px !important;
+  break-inside: avoid;
+}
+
+.roi-calculator.pdf-export .chart-container {
+  background: white !important;
+  padding: 1.5rem !important;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.roi-calculator.pdf-export .financial-summary {
+  background: white !important;
+  padding: 1.5rem !important;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.roi-calculator.pdf-export .roi-chart {
+  height: 250px !important;
+}
+
+/* Simplified print styles */
+@media print {
+  body {
+    background: white !important;
+  }
+  
+  .roi-calculator {
+    background: white !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  
+  .header-actions {
+    display: none !important;
+  }
+  
+  .calculator-header,
+  .calculator-inputs,
+  .metrics-section,
+  .chart-container,
+  .financial-summary {
+    background: white !important;
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    margin-bottom: 1rem !important;
+  }
+  
+  .input-grid,
+  .results-grid {
+    display: block !important;
+  }
+  
+  .metric-card {
+    margin-bottom: 0.5rem !important;
+    border: 1px solid #eee !important;
+    break-inside: avoid;
+  }
+}
+</style>
