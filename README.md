@@ -1,75 +1,79 @@
-# Nuxt Minimal Starter
+# Bühler BRAM Calculator
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+A professional ROI calculator for Bühler's BRAM service solutions with corporate-grade PDF export functionality.
 
-## Setup
+## Features
 
-Make sure to install dependencies:
+- 🧮 **ROI Calculator** - Interactive calculation of return on investment
+- 📊 **Data Visualization** - ECharts-powered ROI projection charts  
+- 📄 **Professional PDF Export** - Corporate-branded reports with jsPDF
+- 🎨 **Corporate Design** - Bühler brand colors and styling
+- 🔒 **Basic Authentication** - Protected demo access
+- ☁️ **Cloud Ready** - Optimized for Google Cloud Run deployment
+
+## Authentication
+
+The production deployment uses Basic Authentication:
+
+- **Username**: `buhler`
+- **Password**: `demo2024`
+
+## Development Setup
 
 ```bash
-# npm
+# Install dependencies
 npm install
 
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
-```
-
-## Development Server
-
-Start the development server on `http://localhost:3000`:
-
-```bash
-# npm
+# Start development server
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-Build the application for production:
+## Production Deployment
 
+### Docker
 ```bash
-# npm
-npm run build
+# Build image
+docker build -t buhler-roi-calculator .
 
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
+# Run container
+docker run -p 8080:8080 buhler-roi-calculator
 ```
 
-Locally preview production build:
+### Google Cloud Run
+The project includes `cloudbuild.yaml` for automated deployment:
 
-```bash
-# npm
-npm run preview
+1. Connect repository to Cloud Build
+2. Push to `main` branch triggers automatic deployment
+3. Deployed to `europe-west1` region
+4. Includes Basic Auth protection
 
-# pnpm
-pnpm preview
+### Environment Variables
 
-# yarn
-yarn preview
+- `BASIC_AUTH_USER` - Basic auth username (default: "buhler")
+- `BASIC_AUTH_PASSWORD` - Basic auth password (default: "demo2024")
+- `NODE_ENV` - Environment mode (production enables auth)
 
-# bun
-bun run preview
-```
+## API Endpoints
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+- `/` - ROI Calculator interface
+- `/api/health` - Health check endpoint for monitoring
+
+## PDF Export Features
+
+- Executive summary with key metrics
+- Detailed input parameters table
+- Current downtime impact analysis
+- BRAM service benefits breakdown
+- Financial analysis with ROI calculations
+- Interactive chart export with optimized scaling
+- Two-page professional layout
+
+## Tech Stack
+
+- **Frontend**: Nuxt 3, Vue 3, TypeScript
+- **Charts**: ECharts, Vue-ECharts
+- **PDF**: jsPDF, jsPDF-AutoTable
+- **Styling**: PrimeVue, PrimeIcons
+- **Deployment**: Docker, Google Cloud Run, Cloud Build
