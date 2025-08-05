@@ -13,6 +13,7 @@
       </div>
       <div class="header-actions">
         <button 
+          v-if="showResults"
           @click="exportToPDF" 
           class="pdf-export-btn"
           :disabled="isExporting"
@@ -20,13 +21,6 @@
           <i class="pi pi-file-pdf" aria-hidden="true"></i>
           {{ isExporting ? 'Exporting...' : 'Export PDF' }}
         </button>
-        
-        <div class="header-badge">
-          <span class="badge-label">Estimated Reduction of Downtime Costs</span>
-          <span class="badge-value">
-            {{ formatCurrency(calculations.potentialSavings) }}
-          </span>
-        </div>
       </div>
     </div>
 
@@ -211,10 +205,21 @@
           </div>
         </div>
       </div>
+      
+      <!-- Calculate Button -->
+      <div class="calculate-section">
+        <button 
+          @click="calculateResults" 
+          class="calculate-btn"
+        >
+          <i class="pi pi-calculator" aria-hidden="true"></i>
+          Calculate ROI
+        </button>
+      </div>
     </div>
 
           <!-- Results Section -->
-      <div class="calculator-results">
+      <div v-if="showResults" class="calculator-results">
         <!-- Current Downtime Impact -->
         <div class="metrics-section">
           <h3 class="section-header">Current Downtime Impact</h3>
@@ -275,7 +280,7 @@
             </div>
             <div class="metric-content">
               <span class="metric-label">Reduction of Production Loss</span>
-              <span class="metric-value">{{ formatNumber(calculations.additionalUptimeHours * inputs.dailyOutputKg / inputs.productionHoursPerDay) }}</span>
+              <span class="metric-value">{{ formatNumber(calculations.additionalOutput) }}</span>
               <span class="metric-sublabel">kg saved per year</span>
             </div>
           </div>
@@ -349,7 +354,7 @@
             </div>
             <div class="summary-item">
               <span class="summary-label">Annual Service Contract Cost</span>
-              <span class="summary-value negative">{{ formatCurrency(inputs.serviceContractCost) }}</span>
+              <span class="summary-value negative">{{ formatCurrency(inputs.serviceContractCost || 0) }}</span>
             </div>
             <div class="summary-item total">
               <span class="summary-label">Net Annual Benefit</span>
@@ -377,14 +382,14 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 
 interface RoiInputs {
-  machinesInOperation: number
-  downtimeEventsPerMachine: number
-  downtimeDurationPerEvent: number
-  productionHoursPerDay: number
-  dailyOutputKg: number
-  productMarginPerKg: number
-  estimatedDowntimeReductionPerEvent: number
-  serviceContractCost: number
+  machinesInOperation: number | null
+  downtimeEventsPerMachine: number | null
+  downtimeDurationPerEvent: number | null
+  productionHoursPerDay: number | null
+  dailyOutputKg: number | null
+  productMarginPerKg: number | null
+  estimatedDowntimeReductionPerEvent: number | null
+  serviceContractCost: number | null
 }
 
 interface RoiCalculations {
@@ -392,26 +397,28 @@ interface RoiCalculations {
   annualProductionLoss: number
   annualRevenueLoss: number
   additionalUptimeHours: number
+  additionalOutput: number
   potentialSavings: number
   netSavings: number
   roi: number
   paybackMonths: number
 }
 
-// Input reactive data (realistic default values)
+// Input reactive data (empty default values)
 const inputs = ref<RoiInputs>({
-  machinesInOperation: 25,
-  downtimeEventsPerMachine: 3,
-  downtimeDurationPerEvent: 8,
-  productionHoursPerDay: 10,
-  dailyOutputKg: 2000,
-  productMarginPerKg: 1.5,
-  estimatedDowntimeReductionPerEvent: 4, // 50% reduction of 8 hours
-  serviceContractCost: 30000
+  machinesInOperation: null,
+  downtimeEventsPerMachine: null,
+  downtimeDurationPerEvent: null,
+  productionHoursPerDay: null,
+  dailyOutputKg: null,
+  productMarginPerKg: null,
+  estimatedDowntimeReductionPerEvent: null,
+  serviceContractCost: null
 })
 
 // Chart reference
 const chartRef = ref<HTMLElement>()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let chartInstance: any = null
 
 // Get echarts instance from plugin
@@ -420,46 +427,72 @@ const { $echarts } = useNuxtApp()
 // PDF Export state
 const isExporting = ref(false)
 
-// Computed calculations
-const calculations = computed<RoiCalculations>(() => {
+// Show results state
+const showResults = ref(false)
+
+// Manual calculations (not computed - only updated when calculate button is clicked)
+const calculations = ref<RoiCalculations>({
+  annualDowntimeHours: 0,
+  annualProductionLoss: 0,
+  annualRevenueLoss: 0,
+  additionalUptimeHours: 0,
+  additionalOutput: 0,
+  potentialSavings: 0,
+  netSavings: 0,
+  roi: 0,
+  paybackMonths: 0
+})
+
+// Function to perform calculations
+const performCalculations = (): RoiCalculations => {
   const input = inputs.value
+  
+  // Convert null values to 0 for calculations
+  const machinesInOperation = input.machinesInOperation || 0
+  const downtimeEventsPerMachine = input.downtimeEventsPerMachine || 0
+  const downtimeDurationPerEvent = input.downtimeDurationPerEvent || 0
+  const productionHoursPerDay = input.productionHoursPerDay || 0
+  const dailyOutputKg = input.dailyOutputKg || 0
+  const productMarginPerKg = input.productMarginPerKg || 0
+  const estimatedDowntimeReductionPerEvent = input.estimatedDowntimeReductionPerEvent || 0
+  const serviceContractCost = input.serviceContractCost || 0
   
   // === CURRENT DOWNTIME IMPACT ===
   // C13: Downtime (hours/year) = E3 × E4 × E5
   // Formula: Downtime events per machine × Duration per event × Machines in operation
-  const annualDowntimeHours = input.downtimeEventsPerMachine * 
-                              input.downtimeDurationPerEvent * 
-                              input.machinesInOperation
+  const annualDowntimeHours = downtimeEventsPerMachine * 
+                              downtimeDurationPerEvent * 
+                              machinesInOperation
   
   // Hourly production rate = Total daily output / Production hours per day
-  const hourlyProductionRate = input.dailyOutputKg / input.productionHoursPerDay
+  const hourlyProductionRate = productionHoursPerDay > 0 ? dailyOutputKg / productionHoursPerDay : 0
   
   // C14: Lost Output (kg/year) = Downtime hours × Hourly production rate
   const annualProductionLoss = annualDowntimeHours * hourlyProductionRate
   
   // C15: Downtime cost (USD/year) = Lost Output × Product Margin
-  const annualRevenueLoss = annualProductionLoss * input.productMarginPerKg
+  const annualRevenueLoss = annualProductionLoss * productMarginPerKg
   
   // === POTENTIAL IMPACT OF BRAM ===
   // C17: Additional Uptime (hours/year) = E3 × E9 × E5
   // Formula: Downtime events × Reduction per event × Machines
-  const additionalUptimeHours = input.downtimeEventsPerMachine * 
-                                input.estimatedDowntimeReductionPerEvent * 
-                                input.machinesInOperation
+  const additionalUptimeHours = downtimeEventsPerMachine * 
+                                estimatedDowntimeReductionPerEvent * 
+                                machinesInOperation
   
   // C18: Additional Output (kg/year) = Additional Uptime × Hourly production
   const additionalOutput = additionalUptimeHours * hourlyProductionRate
   
   // C19: Additional Margin (USD/year) = Additional Output × Product Margin
-  const potentialSavings = additionalOutput * input.productMarginPerKg
+  const potentialSavings = additionalOutput * productMarginPerKg
   
   // === ROI CALCULATION ===
   // C23: Net savings per year = Additional Margin - Service Contract Cost
-  const netSavings = potentialSavings - input.serviceContractCost
+  const netSavings = potentialSavings - serviceContractCost
   
   // C22: ROI in Years = Service Contract Cost / Additional Margin
   const roiInYears = potentialSavings > 0 
-    ? input.serviceContractCost / potentialSavings 
+    ? serviceContractCost / potentialSavings 
     : Infinity
   
   // ROI as percentage (inverse of ROI in years × 100)
@@ -475,17 +508,19 @@ const calculations = computed<RoiCalculations>(() => {
     annualProductionLoss,
     annualRevenueLoss,
     additionalUptimeHours,
+    additionalOutput,
     potentialSavings,
     netSavings,
     roi,
     paybackMonths
   }
-})
+}
 
 // Chart options
 const chartOptions = computed(() => {
   const calc = calculations.value
   const input = inputs.value
+  const serviceContractCost = input.serviceContractCost || 0
   
   // Generate 60-month projection (5 years)
   const months = Array.from({length: 61}, (_, i) => i) // 0 to 60 months
@@ -495,7 +530,7 @@ const chartOptions = computed(() => {
   const cumulativeSavings = months.map(month => {
     // Calculate how many years have passed (service paid at start of each year)
     const yearsPaid = Math.floor(month / 12) + 1 // Always at least 1 year paid
-    const totalServicePaid = yearsPaid * input.serviceContractCost
+    const totalServicePaid = yearsPaid * serviceContractCost
     const totalGrossSavings = monthlyGrossSavings * month
     
     // Net position = savings - service costs paid
@@ -505,12 +540,13 @@ const chartOptions = computed(() => {
   return {
     tooltip: {
       trigger: 'axis',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       formatter: (params: any) => {
         const month = params[0].dataIndex
         const value = params[0].value
         const monthlyPotentialSavings = calc.potentialSavings / 12
         const yearsPaid = Math.floor(month / 12) + 1
-        const totalServicePaid = yearsPaid * input.serviceContractCost
+        const totalServicePaid = yearsPaid * serviceContractCost
         const totalGrossSavings = monthlyPotentialSavings * month
         
         return `
@@ -520,7 +556,7 @@ const chartOptions = computed(() => {
             <hr style="margin: 5px 0; border-color: #e2e8f0;">
             Total Savings: ${formatCurrency(totalGrossSavings)}<br/>
             Service Costs Paid: ${formatCurrency(totalServicePaid)}<br/>
-            <small>(${yearsPaid} year${yearsPaid !== 1 ? 's' : ''} × ${formatCurrency(input.serviceContractCost)})</small>
+            <small>(${yearsPaid} year${yearsPaid !== 1 ? 's' : ''} × ${formatCurrency(serviceContractCost)})</small>
           </div>
         `
       }
@@ -629,7 +665,13 @@ const chartOptions = computed(() => {
 // Initialize chart
 const initChart = async () => {
   await nextTick()
-  if (chartRef.value && !chartInstance && $echarts) {
+  if (chartRef.value && $echarts) {
+    // Dispose existing instance if it exists
+    if (chartInstance) {
+      chartInstance.dispose()
+      chartInstance = null
+    }
+    // Create new instance
     chartInstance = $echarts.init(chartRef.value)
     updateChart()
   }
@@ -642,12 +684,39 @@ const updateChart = () => {
   }
 }
 
-// Watch for changes and update chart
-watch([inputs, calculations], updateChart, { deep: true })
+// Calculate results function
+const calculateResults = () => {
+  // Perform calculations and update the calculations ref
+  calculations.value = performCalculations()
+  showResults.value = true
+  // Initialize and update chart after results are shown
+  nextTick(async () => {
+    await initChart()
+    updateChart()
+  })
+}
+
+// Only watch calculations changes to update chart (not inputs)
+watch(calculations, () => {
+  if (showResults.value) {
+    updateChart()
+  }
+}, { deep: true })
+
+// Watch showResults to initialize chart when results become visible
+watch(showResults, (newValue) => {
+  if (newValue) {
+    nextTick(async () => {
+      await initChart()
+      updateChart()
+    })
+  }
+})
 
 // Lifecycle hooks
 onMounted(() => {
-  initChart()
+  // Don't initialize chart on mount since results are hidden initially
+  // Chart will be initialized when calculateResults is called
   
   // Handle window resize
   window.addEventListener('resize', () => {
@@ -765,14 +834,14 @@ const exportToPDF = async () => {
       startY: yPos,
       head: [['Parameter', 'Value', 'Unit']],
       body: [
-        ['Machines in Operation', input.machinesInOperation.toString(), 'units'],
-        ['Production Hours per Day', input.productionHoursPerDay.toString(), 'hours'],
-        ['Daily Output', formatNumber(input.dailyOutputKg), 'kg'],
-        ['Downtime Events per Machine/Year', input.downtimeEventsPerMachine.toString(), 'events'],
-        ['Downtime Duration per Event', input.downtimeDurationPerEvent.toString(), 'hours'],
-        ['Estimated Downtime Reduction per Event', input.estimatedDowntimeReductionPerEvent.toString(), 'hours'],
-        ['Product Margin per kg', `$${input.productMarginPerKg.toFixed(2)}`, 'per kg'],
-        ['Service Contract Cost', formatCurrency(input.serviceContractCost), 'per year']
+        ['Machines in Operation', (input.machinesInOperation || 0).toString(), 'units'],
+        ['Production Hours per Day', (input.productionHoursPerDay || 0).toString(), 'hours'],
+        ['Daily Output', formatNumber(input.dailyOutputKg || 0), 'kg'],
+        ['Downtime Events per Machine/Year', (input.downtimeEventsPerMachine || 0).toString(), 'events'],
+        ['Downtime Duration per Event', (input.downtimeDurationPerEvent || 0).toString(), 'hours'],
+        ['Estimated Downtime Reduction per Event', (input.estimatedDowntimeReductionPerEvent || 0).toString(), 'hours'],
+        ['Product Margin per kg', `$${(input.productMarginPerKg || 0).toFixed(2)}`, 'per kg'],
+        ['Service Contract Cost', formatCurrency(input.serviceContractCost || 0), 'per year']
       ],
       theme: 'grid',
       headStyles: {
@@ -837,7 +906,7 @@ const exportToPDF = async () => {
       head: [['Benefit', 'Annual Value']],
       body: [
         ['Downtime Reduction', formatNumber(calc.additionalUptimeHours) + ' hours'],
-        ['Reduction of Production Loss', formatNumber(calc.additionalUptimeHours * input.dailyOutputKg / input.productionHoursPerDay) + ' kg'],
+        ['Reduction of Production Loss', formatNumber(calc.additionalUptimeHours * (input.dailyOutputKg || 0) / (input.productionHoursPerDay || 1)) + ' kg'],
         ['Reduction of Downtime Costs', formatCurrency(calc.potentialSavings)]
       ],
       theme: 'grid',
@@ -873,7 +942,7 @@ const exportToPDF = async () => {
       head: [['Financial Metric', 'Value']],
       body: [
         ['Estimated Reduction of Downtime Costs', formatCurrency(calc.potentialSavings)],
-        ['Annual Service Contract Cost', formatCurrency(input.serviceContractCost)],
+        ['Annual Service Contract Cost', formatCurrency(input.serviceContractCost || 0)],
         ['Net Annual Benefit', formatCurrency(calc.netSavings)],
         ['Return on Investment (ROI)', formatPercentage(calc.roi)],
         ['Payback Period', formatMonths(calc.paybackMonths)]
@@ -1240,6 +1309,43 @@ const exportToPDF = async () => {
   padding-left: 0.5rem;
 }
 
+/* Calculate Section */
+.calculate-section {
+  display: flex;
+  justify-content: center;
+  padding: 2rem 0;
+}
+
+.calculate-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  background: var(--buhler-primary);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 155, 145, 0.3);
+}
+
+.calculate-btn:hover {
+  background: var(--buhler-primary-700);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 155, 145, 0.4);
+}
+
+.calculate-btn:active {
+  transform: translateY(0);
+}
+
+.calculate-btn i {
+  font-size: 1.25rem;
+}
+
 /* Results Section */
 .calculator-results {
   display: flex;
@@ -1254,13 +1360,11 @@ const exportToPDF = async () => {
 }
 
 .section-header {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #000000;
   margin: 0;
-  padding: 0 0 0.5rem 0;
+  padding: 0 0 0.75rem 0;
 }
 
 .results-grid {
