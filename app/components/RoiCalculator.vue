@@ -154,18 +154,37 @@
         <div class="input-section">
             <h4 class="section-title">
             <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-              Current Downtime Impact
+              Current Downtime Parameters
             </h4>
           
           <div class="input-group">
-            <label for="downtime-events" class="input-label">
-              Downtime Events per Machine/Year
-              <span class="input-hint">Average number of unplanned stops</span>
+            <label for="planned-events" class="input-label">
+              Planned Maintenance Events per Machine/Year
+              <span class="input-hint">Scheduled maintenance stops per machine annually</span>
             </label>
             <div class="input-wrapper">
               <input 
-                id="downtime-events"
-                v-model.number="inputs.downtimeEventsPerMachine"
+                id="planned-events"
+                v-model.number="inputs.plannedMaintenanceEvents"
+                type="number" 
+                class="input-field"
+                min="0"
+                max="100"
+                step="1"
+              />
+              <span class="input-unit">events</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="unplanned-events" class="input-label">
+              Unplanned Maintenance Events per Machine/Year
+              <span class="input-hint">Unexpected breakdowns per machine annually</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                id="unplanned-events"
+                v-model.number="inputs.unplannedMaintenanceEvents"
                 type="number" 
                 class="input-field"
                 min="0"
@@ -177,14 +196,33 @@
           </div>
 
           <div class="input-group">
-            <label for="downtime-duration" class="input-label">
-              Downtime Duration per Event
-              <span class="input-hint">Average hours per downtime event</span>
+            <label for="planned-duration" class="input-label">
+              Planned Downtime Duration per Event
+              <span class="input-hint">Average hours per planned maintenance</span>
             </label>
             <div class="input-wrapper">
               <input 
-                id="downtime-duration"
-                v-model.number="inputs.downtimeDurationPerEvent"
+                id="planned-duration"
+                v-model.number="inputs.plannedDowntimeDurationPerEvent"
+                type="number" 
+                class="input-field"
+                min="0.5"
+                max="72"
+                step="0.5"
+              />
+              <span class="input-unit">hours</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="unplanned-duration" class="input-label">
+              Unplanned Downtime Duration per Event
+              <span class="input-hint">Average hours per unplanned breakdown</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                id="unplanned-duration"
+                v-model.number="inputs.unplannedDowntimeDurationPerEvent"
                 type="number" 
                 class="input-field"
                 min="0.5"
@@ -290,12 +328,20 @@
                 </span>
               </div>
               <div class="preview-item">
-                <span class="preview-label">Downtime Events/Year</span>
-                <span class="preview-value">{{ inputs.downtimeEventsPerMachine || 0 }} events</span>
+                <span class="preview-label">Planned Maintenance Events/Year</span>
+                <span class="preview-value">{{ inputs.plannedMaintenanceEvents || 0 }} events</span>
               </div>
               <div class="preview-item">
-                <span class="preview-label">Downtime Duration</span>
-                <span class="preview-value">{{ inputs.downtimeDurationPerEvent || 0 }} hours</span>
+                <span class="preview-label">Unplanned Maintenance Events/Year</span>
+                <span class="preview-value">{{ inputs.unplannedMaintenanceEvents || 0 }} events</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Planned Downtime Duration</span>
+                <span class="preview-value">{{ inputs.plannedDowntimeDurationPerEvent || 0 }} hours</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Unplanned Downtime Duration</span>
+                <span class="preview-value">{{ inputs.unplannedDowntimeDurationPerEvent || 0 }} hours</span>
               </div>
               <div class="preview-item">
                 <span class="preview-label">Product Margin</span>
@@ -321,16 +367,44 @@
         <div v-if="showResults" class="calculator-results">
           <!-- Current Downtime Impact -->
           <div class="metrics-section">
-            <h4 class="section-header">Current Downtime Impact</h4>
+            <h4 class="section-header">Downtime Impact</h4>
+            
+            <!-- Downtime Hours -->
             <div class="results-grid">
               <div class="metric-card warning">
                 <div class="metric-icon">
-                  <i class="pi pi-clock" aria-hidden="true"></i>
+                  <i class="pi pi-calendar" aria-hidden="true"></i>
                 </div>
                 <div class="metric-content">
-                  <span class="metric-label">Annual Downtime</span>
-                  <span class="metric-value">{{ formatNumber(calculations.annualDowntimeHours) }}</span>
-                  <span class="metric-sublabel">Hours lost per year</span>
+                  <span class="metric-label">Annual Planned Downtime</span>
+                  <span class="metric-value">{{ formatNumber(calculations.annualPlannedDowntimeHours) }}</span>
+                  <span class="metric-sublabel">Hours per year</span>
+                </div>
+              </div>
+
+              <div class="metric-card danger">
+                <div class="metric-icon">
+                  <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Annual Unplanned Downtime</span>
+                  <span class="metric-value">{{ formatNumber(calculations.annualUnplannedDowntimeHours) }}</span>
+                  <span class="metric-sublabel">Hours per year</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Production Loss -->
+            <div class="results-grid">
+              <div class="metric-card info">
+                <div class="metric-icon">
+                  <i class="pi pi-box" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Annual Production Loss</span>
+                  <span class="metric-sublabel-top">(Through planned downtime)</span>
+                  <span class="metric-value">{{ formatNumber(calculations.annualPlannedProductionLoss) }}</span>
+                  <span class="metric-sublabel">{{ weightUnitLabel }} lost per year</span>
                 </div>
               </div>
 
@@ -339,9 +413,25 @@
                   <i class="pi pi-box" aria-hidden="true"></i>
                 </div>
                 <div class="metric-content">
-                  <span class="metric-label">Production Loss</span>
-                  <span class="metric-value">{{ formatNumber(calculations.annualProductionLoss) }}</span>
-                  <span class="metric-sublabel">kg lost per year</span>
+                  <span class="metric-label">Annual Production Loss</span>
+                  <span class="metric-sublabel-top">(Through unplanned downtime)</span>
+                  <span class="metric-value">{{ formatNumber(calculations.annualUnplannedProductionLoss) }}</span>
+                  <span class="metric-sublabel">{{ weightUnitLabel }} lost per year</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Financial Loss -->
+            <div class="results-grid">
+              <div class="metric-card warning">
+                <div class="metric-icon">
+                  <i class="pi pi-dollar" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Annual Financial Loss</span>
+                  <span class="metric-sublabel-top">(Through planned downtime)</span>
+                  <span class="metric-value">{{ formatCurrency(calculations.annualPlannedRevenueLoss) }}</span>
+                  <span class="metric-sublabel">Revenue lost annually</span>
                 </div>
               </div>
 
@@ -350,9 +440,49 @@
                   <i class="pi pi-dollar" aria-hidden="true"></i>
                 </div>
                 <div class="metric-content">
-                  <span class="metric-label">USD Loss per Year</span>
-                  <span class="metric-value">{{ formatCurrency(calculations.annualRevenueLoss) }}</span>
+                  <span class="metric-label">Annual Financial Loss</span>
+                  <span class="metric-sublabel-top">(Through unplanned downtime)</span>
+                  <span class="metric-value">{{ formatCurrency(calculations.annualUnplannedRevenueLoss) }}</span>
                   <span class="metric-sublabel">Revenue lost annually</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Total Impact Summary -->
+            <div class="total-summary">
+              <h5 class="summary-subtitle">Total Combined Impact</h5>
+              <div class="results-grid">
+                <div class="metric-card total-card">
+                  <div class="metric-icon">
+                    <i class="pi pi-clock" aria-hidden="true"></i>
+                  </div>
+                  <div class="metric-content">
+                    <span class="metric-label">Total Annual Downtime</span>
+                    <span class="metric-value">{{ formatNumber(calculations.annualDowntimeHours) }}</span>
+                    <span class="metric-sublabel">Hours lost per year</span>
+                  </div>
+                </div>
+
+                <div class="metric-card total-card">
+                  <div class="metric-icon">
+                    <i class="pi pi-box" aria-hidden="true"></i>
+                  </div>
+                  <div class="metric-content">
+                    <span class="metric-label">Total Production Loss</span>
+                    <span class="metric-value">{{ formatNumber(calculations.annualProductionLoss) }}</span>
+                    <span class="metric-sublabel">{{ weightUnitLabel }} lost per year</span>
+                  </div>
+                </div>
+
+                <div class="metric-card total-card">
+                  <div class="metric-icon">
+                    <i class="pi pi-dollar" aria-hidden="true"></i>
+                  </div>
+                  <div class="metric-content">
+                    <span class="metric-label">Total Financial Loss</span>
+                    <span class="metric-value">{{ formatCurrency(calculations.annualRevenueLoss) }}</span>
+                    <span class="metric-sublabel">Revenue lost annually</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -512,8 +642,10 @@ import CurrencyWeightInput from './CurrencyWeightInput.vue'
 
 interface RoiInputs {
   machinesInOperation: number | null
-  downtimeEventsPerMachine: number | null
-  downtimeDurationPerEvent: number | null
+  plannedMaintenanceEvents: number | null
+  unplannedMaintenanceEvents: number | null
+  plannedDowntimeDurationPerEvent: number | null
+  unplannedDowntimeDurationPerEvent: number | null
   productionDaysPerYear: number | null
   productionHoursPerDay: number | null
   dailyOutputKg: number | null
@@ -523,9 +655,22 @@ interface RoiInputs {
 }
 
 interface RoiCalculations {
+  // Planned Downtime
+  annualPlannedDowntimeHours: number
+  annualPlannedProductionLoss: number
+  annualPlannedRevenueLoss: number
+  
+  // Unplanned Downtime
+  annualUnplannedDowntimeHours: number
+  annualUnplannedProductionLoss: number
+  annualUnplannedRevenueLoss: number
+  
+  // Combined Totals
   annualDowntimeHours: number
   annualProductionLoss: number
   annualRevenueLoss: number
+  
+  // BRAM Impact
   additionalUptimeHours: number
   additionalOutput: number
   potentialSavings: number
@@ -537,8 +682,10 @@ interface RoiCalculations {
 // Input reactive data (empty default values)
 const inputs = ref<RoiInputs>({
   machinesInOperation: null,
-  downtimeEventsPerMachine: null,
-  downtimeDurationPerEvent: null,
+  plannedMaintenanceEvents: null,
+  unplannedMaintenanceEvents: null,
+  plannedDowntimeDurationPerEvent: null,
+  unplannedDowntimeDurationPerEvent: null,
   productionDaysPerYear: null,
   productionHoursPerDay: null,
   dailyOutputKg: null,
@@ -624,9 +771,22 @@ const handleProductMarginUpdate = (value: number | null) => {
 
 // Manual calculations (not computed - only updated when calculate button is clicked)
 const calculations = ref<RoiCalculations>({
+  // Planned Downtime
+  annualPlannedDowntimeHours: 0,
+  annualPlannedProductionLoss: 0,
+  annualPlannedRevenueLoss: 0,
+  
+  // Unplanned Downtime
+  annualUnplannedDowntimeHours: 0,
+  annualUnplannedProductionLoss: 0,
+  annualUnplannedRevenueLoss: 0,
+  
+  // Combined Totals
   annualDowntimeHours: 0,
   annualProductionLoss: 0,
   annualRevenueLoss: 0,
+  
+  // BRAM Impact
   additionalUptimeHours: 0,
   additionalOutput: 0,
   potentialSavings: 0,
@@ -641,8 +801,10 @@ const performCalculations = (): RoiCalculations => {
   
   // Convert null values to 0 for calculations
   const machinesInOperation = input.machinesInOperation || 0
-  const downtimeEventsPerMachine = input.downtimeEventsPerMachine || 0
-  const downtimeDurationPerEvent = input.downtimeDurationPerEvent || 0
+  const plannedMaintenanceEvents = input.plannedMaintenanceEvents || 0
+  const unplannedMaintenanceEvents = input.unplannedMaintenanceEvents || 0
+  const plannedDowntimeDurationPerEvent = input.plannedDowntimeDurationPerEvent || 0
+  const unplannedDowntimeDurationPerEvent = input.unplannedDowntimeDurationPerEvent || 0
   const productionDaysPerYear = input.productionDaysPerYear || 0
   const productionHoursPerDay = input.productionHoursPerDay || 0
   const dailyOutputKg = input.dailyOutputKg || 0
@@ -651,11 +813,6 @@ const performCalculations = (): RoiCalculations => {
   const serviceContractCost = input.serviceContractCost || 0
   
   // === CURRENT DOWNTIME IMPACT ===
-  // C13: Downtime (hours/year) = E3 × E4 × E5
-  // Formula: Downtime events per machine × Duration per event × Machines in operation
-  const annualDowntimeHours = downtimeEventsPerMachine * 
-                              downtimeDurationPerEvent * 
-                              machinesInOperation
   
   // Hourly production rate = Daily output / Production hours per day
   const hourlyProductionRate = productionHoursPerDay > 0 ? dailyOutputKg / productionHoursPerDay : 0
@@ -666,16 +823,40 @@ const performCalculations = (): RoiCalculations => {
   // Total annual production hours = Production days × Production hours per day
   const annualProductionHours = productionDaysPerYear * productionHoursPerDay
   
-  // C14: Lost Output (kg/year) = Downtime hours × Hourly production rate
-  const annualProductionLoss = annualDowntimeHours * hourlyProductionRate
+  // PLANNED DOWNTIME CALCULATIONS
+  // Planned downtime hours per year = Planned events × Duration × Machines
+  const annualPlannedDowntimeHours = plannedMaintenanceEvents * 
+                                     plannedDowntimeDurationPerEvent * 
+                                     machinesInOperation
   
-  // C15: Downtime cost (USD/year) = Lost Output × Product Margin
-  const annualRevenueLoss = annualProductionLoss * productMarginPerKg
+  // Planned production loss = Planned downtime hours × Hourly production rate
+  const annualPlannedProductionLoss = annualPlannedDowntimeHours * hourlyProductionRate
+  
+  // Planned revenue loss = Planned production loss × Product margin
+  const annualPlannedRevenueLoss = annualPlannedProductionLoss * productMarginPerKg
+  
+  // UNPLANNED DOWNTIME CALCULATIONS
+  // Unplanned downtime hours per year = Unplanned events × Duration × Machines
+  const annualUnplannedDowntimeHours = unplannedMaintenanceEvents * 
+                                       unplannedDowntimeDurationPerEvent * 
+                                       machinesInOperation
+  
+  // Unplanned production loss = Unplanned downtime hours × Hourly production rate
+  const annualUnplannedProductionLoss = annualUnplannedDowntimeHours * hourlyProductionRate
+  
+  // Unplanned revenue loss = Unplanned production loss × Product margin
+  const annualUnplannedRevenueLoss = annualUnplannedProductionLoss * productMarginPerKg
+  
+  // COMBINED TOTALS
+  const annualDowntimeHours = annualPlannedDowntimeHours + annualUnplannedDowntimeHours
+  const annualProductionLoss = annualPlannedProductionLoss + annualUnplannedProductionLoss
+  const annualRevenueLoss = annualPlannedRevenueLoss + annualUnplannedRevenueLoss
   
   // === POTENTIAL IMPACT OF BRAM ===
-  // C17: Additional Uptime (hours/year) = E3 × E9 × E5
-  // Formula: Downtime events × Reduction per event × Machines
-  const additionalUptimeHours = downtimeEventsPerMachine * 
+  // C17: Additional Uptime (hours/year) = Total events × Reduction per event × Machines
+  // Formula: (Planned + Unplanned events) × Reduction per event × Machines
+  const totalMaintenanceEvents = plannedMaintenanceEvents + unplannedMaintenanceEvents
+  const additionalUptimeHours = totalMaintenanceEvents * 
                                 estimatedDowntimeReductionPerEvent * 
                                 machinesInOperation
   
@@ -703,9 +884,22 @@ const performCalculations = (): RoiCalculations => {
   const paybackMonths = roiInYears * 12
   
   return {
+    // Planned Downtime
+    annualPlannedDowntimeHours,
+    annualPlannedProductionLoss,
+    annualPlannedRevenueLoss,
+    
+    // Unplanned Downtime
+    annualUnplannedDowntimeHours,
+    annualUnplannedProductionLoss,
+    annualUnplannedRevenueLoss,
+    
+    // Combined Totals
     annualDowntimeHours,
     annualProductionLoss,
     annualRevenueLoss,
+    
+    // BRAM Impact
     additionalUptimeHours,
     additionalOutput,
     potentialSavings,
@@ -913,8 +1107,10 @@ const isStepCompleted = (step: number): boolean => {
       inputs.value.productionDaysPerYear &&
       inputs.value.productionHoursPerDay &&
       inputs.value.dailyOutputKg &&
-      inputs.value.downtimeEventsPerMachine &&
-      inputs.value.downtimeDurationPerEvent &&
+      inputs.value.plannedMaintenanceEvents &&
+      inputs.value.unplannedMaintenanceEvents &&
+      inputs.value.plannedDowntimeDurationPerEvent &&
+      inputs.value.unplannedDowntimeDurationPerEvent &&
       inputs.value.productMarginPerKg
     )
   } else if (step === 2) {
@@ -1142,8 +1338,10 @@ const exportToPDF = async () => {
         ['Production Days per Year', (input.productionDaysPerYear || 0).toString(), 'days'],
         ['Production Hours per Day', (input.productionHoursPerDay || 0).toString(), 'hours'],
         [dailyOutputLabel.value, weightUnit.value === 'kg' ? formatNumber(input.dailyOutputKg || 0) : weightUnit.value === 'lb' ? formatNumber(kgToLb(input.dailyOutputKg || 0)) : formatNumber(input.dailyOutputKg || 0), weightUnitLabel.value],
-        ['Downtime Events per Machine/Year', (input.downtimeEventsPerMachine || 0).toString(), 'events'],
-        ['Downtime Duration per Event', (input.downtimeDurationPerEvent || 0).toString(), 'hours'],
+        ['Planned Maintenance Events per Machine/Year', (input.plannedMaintenanceEvents || 0).toString(), 'events'],
+        ['Unplanned Maintenance Events per Machine/Year', (input.unplannedMaintenanceEvents || 0).toString(), 'events'],
+        ['Planned Downtime Duration per Event', (input.plannedDowntimeDurationPerEvent || 0).toString(), 'hours'],
+        ['Unplanned Downtime Duration per Event', (input.unplannedDowntimeDurationPerEvent || 0).toString(), 'hours'],
         ['Estimated Downtime Reduction per Event', (input.estimatedDowntimeReductionPerEvent || 0).toString(), 'hours'],
         [`Product Margin per ${weightUnitLabel.value}`, `$${weightUnit.value === 'kg' ? (input.productMarginPerKg || 0).toFixed(2) : weightUnit.value === 'lb' ? ((input.productMarginPerKg || 0) / 2.20462).toFixed(4) : (input.productMarginPerKg || 0).toFixed(2)}`, `per ${weightUnitLabel.value}`],
         ['Service Contract Cost', formatCurrency(input.serviceContractCost || 0), 'per year']
@@ -1165,38 +1363,7 @@ const exportToPDF = async () => {
       margin: { left: 20, right: 20 }
     })
     
-    // Current Downtime Impact
-    yPos = doc.lastAutoTable.finalY + 15
-    doc.setFontSize(16)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(...buhlerGreen)
-    doc.text('Current Downtime Impact', 20, yPos)
-    
-    yPos += 5
-    autoTable(doc, {
-      startY: yPos,
-      head: [['Metric', 'Annual Impact']],
-      body: [
-        ['Total Downtime Hours', formatNumber(calc.annualDowntimeHours) + ' hours'],
-        ['Production Loss', formatNumber(calc.annualProductionLoss) + ' kg'],
-        ['Revenue Loss', formatCurrency(calc.annualRevenueLoss)]
-      ],
-      theme: 'grid',
-      headStyles: {
-        fillColor: [239, 68, 68], // Red for negative impact
-        textColor: [255, 255, 255],
-        fontSize: 11,
-        fontStyle: 'bold'
-      },
-      bodyStyles: {
-        fontSize: 10,
-        textColor: darkGray
-      },
-      alternateRowStyles: {
-        fillColor: backgroundColor
-      },
-      margin: { left: 20, right: 20 }
-    })
+
     
     // BRAM Benefits - keep on page 1
     yPos = doc.lastAutoTable.finalY + 15
@@ -1211,7 +1378,7 @@ const exportToPDF = async () => {
       head: [['Benefit', 'Annual Value']],
       body: [
         ['Downtime Reduction', formatNumber(calc.additionalUptimeHours) + ' hours'],
-        ['Reduction of Production Loss', formatNumber(calc.additionalUptimeHours * (input.dailyOutputKg || 0) / (input.productionHoursPerDay || 1)) + ' kg'],
+        ['Reduction of Production Loss', formatNumber(calc.additionalOutput) + ' ' + weightUnitLabel.value],
         ['Reduction of Downtime Costs', formatCurrency(calc.potentialSavings)]
       ],
       theme: 'grid',
@@ -1231,17 +1398,99 @@ const exportToPDF = async () => {
       margin: { left: 20, right: 20 }
     })
     
-    // Start page 2 with Financial Analysis and Chart
+    // Start page 2 with Downtime Impact Analysis, Financial Analysis and Chart
     doc.addPage()
     yPos = 30
     
+    // Downtime Impact Analysis - now on page 2
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...buhlerGreen)
+    doc.text('Downtime Impact Analysis', 20, yPos)
+    
+    // Planned vs Unplanned Downtime
+    yPos += 8
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...darkGray)
+    doc.text('Planned vs Unplanned Downtime', 20, yPos)
+    
+    yPos += 3
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Downtime Type', 'Annual Hours', 'Production Loss', 'Financial Loss']],
+      body: [
+        [
+          'Planned Downtime', 
+          formatNumber(calc.annualPlannedDowntimeHours) + ' hours',
+          formatNumber(calc.annualPlannedProductionLoss) + ' ' + weightUnitLabel.value,
+          formatCurrency(calc.annualPlannedRevenueLoss)
+        ],
+        [
+          'Unplanned Downtime', 
+          formatNumber(calc.annualUnplannedDowntimeHours) + ' hours',
+          formatNumber(calc.annualUnplannedProductionLoss) + ' ' + weightUnitLabel.value,
+          formatCurrency(calc.annualUnplannedRevenueLoss)
+        ]
+      ],
+      theme: 'grid',
+      headStyles: {
+        fillColor: [251, 146, 60], // Orange for downtime analysis
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: darkGray
+      },
+      alternateRowStyles: {
+        fillColor: backgroundColor
+      },
+      margin: { left: 20, right: 20 }
+    })
+    
+    // Total Combined Impact
+    yPos = doc.lastAutoTable.finalY + 8
+    doc.setFontSize(12)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...darkGray)
+    doc.text('Total Combined Impact', 20, yPos)
+    
+    yPos += 3
+    autoTable(doc, {
+      startY: yPos,
+      head: [['Total Impact Metric', 'Annual Value']],
+      body: [
+        ['Total Downtime Hours', formatNumber(calc.annualDowntimeHours) + ' hours'],
+        ['Total Production Loss', formatNumber(calc.annualProductionLoss) + ' ' + weightUnitLabel.value],
+        ['Total Financial Loss', formatCurrency(calc.annualRevenueLoss)]
+      ],
+      theme: 'grid',
+      headStyles: {
+        fillColor: [239, 68, 68], // Red for total negative impact
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: 'bold'
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: darkGray
+      },
+      alternateRowStyles: {
+        fillColor: backgroundColor
+      },
+      margin: { left: 20, right: 20 }
+    })
+    
     // Financial Analysis - now on page 2
+    yPos = doc.lastAutoTable.finalY + 12
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(...buhlerGreen)
     doc.text('Financial Analysis', 20, yPos)
     
-    yPos += 5
+    yPos += 3
     autoTable(doc, {
       startY: yPos,
       head: [['Financial Metric', 'Value']],
@@ -1281,10 +1530,11 @@ const exportToPDF = async () => {
       }
     })
     
-    // ROI Chart - below Financial Analysis on page 2
-    yPos = doc.lastAutoTable.finalY + 20
+    // Start page 3 with ROI Chart
+    doc.addPage()
+    yPos = 30
     
-    // Chart title on new page
+    // Chart title on page 3
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(...buhlerGreen)
@@ -1334,11 +1584,11 @@ const exportToPDF = async () => {
         const chartWidth = 170  // Full width minus margins
         const chartHeight = 106 // Perfect 16:10 ratio for A4
         
-        // Add chart to page 2
+        // Add chart to page 3
         doc.addImage(chartDataURL, 'PNG', 20, yPos + 10, chartWidth, chartHeight)
         
         // Add chart description
-        yPos += chartHeight + 20
+        yPos += chartHeight + 15
         doc.setFontSize(10)
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(...lightGray)
@@ -2038,6 +2288,43 @@ const exportToPDF = async () => {
 .metric-sublabel {
   font-size: 0.75rem;
   color: #94a3b8;
+}
+
+.metric-sublabel-top {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+/* Total Summary Styles */
+.total-summary {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+.summary-subtitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem 0;
+  text-align: center;
+}
+
+.metric-card.total-card {
+  border: 2px solid var(--buhler-primary);
+  background: rgba(0, 155, 145, 0.02);
+}
+
+.metric-card.total-card .metric-icon {
+  background: rgba(0, 155, 145, 0.1);
+  color: var(--buhler-primary);
+}
+
+.metric-card.total-card .metric-value {
+  color: var(--buhler-primary);
+  font-weight: 700;
 }
 
 /* Financial Summary */
