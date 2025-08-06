@@ -71,10 +71,23 @@
             </h4>
           
           <div class="input-group">
-            <label for="machines-in-operation" class="input-label">
-              Machines in Operation
-              <span class="input-hint">Number of machines in your facility</span>
-            </label>
+            <div class="input-label-with-toggle">
+              <label for="machines-in-operation" class="input-label">
+                {{ machinesLabel }}
+                <span class="input-hint">{{ machinesHint }}</span>
+              </label>
+              <div class="terminology-toggle">
+                <button 
+                  type="button"
+                  @click="machinesTerminology = machinesTerminology === 'operation' ? 'scope' : 'operation'"
+                  class="toggle-btn"
+                  :class="{ active: machinesTerminology === 'operation' }"
+                >
+                  <i class="pi pi-sync" aria-hidden="true"></i>
+                  {{ machinesTerminology === 'operation' ? 'Switch to Scope' : 'Switch to Operation' }}
+                </button>
+              </div>
+            </div>
             <div class="input-wrapper">
               <input 
                 id="machines-in-operation"
@@ -86,6 +99,25 @@
                 step="1"
               />
               <span class="input-unit">units</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="production-days" class="input-label">
+              Production Days per Year
+              <span class="input-hint">Number of production days annually</span>
+            </label>
+            <div class="input-wrapper">
+              <input 
+                id="production-days"
+                v-model.number="inputs.productionDaysPerYear"
+                type="number" 
+                class="input-field"
+                min="1"
+                max="365"
+                step="1"
+              />
+              <span class="input-unit">days</span>
             </div>
           </div>
 
@@ -108,24 +140,14 @@
             </div>
           </div>
 
-          <div class="input-group">
-            <label for="daily-output" class="input-label">
-              Daily Output
-              <span class="input-hint">Average production output per day</span>
-            </label>
-            <div class="input-wrapper">
-              <input 
-                id="daily-output"
-                v-model.number="inputs.dailyOutputKg"
-                type="number" 
-                class="input-field"
-                min="100"
-                max="100000"
-                step="100"
-              />
-              <span class="input-unit">kg</span>
-            </div>
-          </div>
+          <WeightInput
+            :model-value="inputs.dailyOutputKg"
+            :label="dailyOutputLabel"
+            :hint="dailyOutputHint + ' (e.g. 1000kg or 2200lb)'"
+            input-id="daily-output"
+            @update:model-value="handleDailyOutputUpdate"
+            @update:unit="handleDailyOutputUnitUpdate"
+          />
         </div>
 
         <!-- Downtime Impact -->
@@ -173,25 +195,14 @@
             </div>
           </div>
 
-          <div class="input-group">
-              <label for="product-margin" class="input-label">
-                Product Margin per kg
-                <span class="input-hint">Profit margin per kg of product</span>
-            </label>
-              <div class="input-wrapper currency">
-                <span class="currency-symbol">$</span>
-              <input 
-                  id="product-margin"
-                  v-model.number="inputs.productMarginPerKg"
-                type="number" 
-                class="input-field"
-                min="0"
-                max="100"
-                  step="0.01"
-              />
-                <span class="input-unit">per kg</span>
-              </div>
-            </div>
+          <CurrencyWeightInput
+            :model-value="inputs.productMarginPerKg"
+            :label="`Product Margin per ${weightUnitLabel}`"
+            :hint="`Profit margin per ${weightUnitLabel} of product`"
+            :unit="weightUnit"
+            input-id="product-margin"
+            @update:model-value="handleProductMarginUpdate"
+          />
             </div>
           </div>
         </div>
@@ -261,16 +272,22 @@
             </h4>
             <div class="preview-grid">
               <div class="preview-item">
-                <span class="preview-label">Machines</span>
+                <span class="preview-label">{{ machinesLabel }}</span>
                 <span class="preview-value">{{ inputs.machinesInOperation || 0 }} units</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Production Days/Year</span>
+                <span class="preview-value">{{ inputs.productionDaysPerYear || 0 }} days</span>
               </div>
               <div class="preview-item">
                 <span class="preview-label">Production Hours/Day</span>
                 <span class="preview-value">{{ inputs.productionHoursPerDay || 0 }} hours</span>
               </div>
               <div class="preview-item">
-                <span class="preview-label">Daily Output</span>
-                <span class="preview-value">{{ formatNumber(inputs.dailyOutputKg || 0) }} kg</span>
+                <span class="preview-label">{{ dailyOutputLabel }}</span>
+                <span class="preview-value">
+                  {{ weightUnit === 'kg' ? formatNumber(inputs.dailyOutputKg || 0) : weightUnit === 'lb' ? formatNumber(kgToLb(inputs.dailyOutputKg || 0)) : formatNumber(inputs.dailyOutputKg || 0) }} {{ weightUnitLabel }}
+                </span>
               </div>
               <div class="preview-item">
                 <span class="preview-label">Downtime Events/Year</span>
@@ -282,7 +299,9 @@
               </div>
               <div class="preview-item">
                 <span class="preview-label">Product Margin</span>
-                <span class="preview-value">${{ (inputs.productMarginPerKg || 0).toFixed(2) }}/kg</span>
+                <span class="preview-value">
+                  ${{ weightUnit === 'kg' ? (inputs.productMarginPerKg || 0).toFixed(2) : weightUnit === 'lb' ? ((inputs.productMarginPerKg || 0) / 2.20462).toFixed(4) : (inputs.productMarginPerKg || 0).toFixed(2) }}/{{ weightUnitLabel }}
+                </span>
               </div>
             </div>
           </div>
@@ -488,11 +507,14 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
+import WeightInput from './WeightInput.vue'
+import CurrencyWeightInput from './CurrencyWeightInput.vue'
 
 interface RoiInputs {
   machinesInOperation: number | null
   downtimeEventsPerMachine: number | null
   downtimeDurationPerEvent: number | null
+  productionDaysPerYear: number | null
   productionHoursPerDay: number | null
   dailyOutputKg: number | null
   productMarginPerKg: number | null
@@ -517,6 +539,7 @@ const inputs = ref<RoiInputs>({
   machinesInOperation: null,
   downtimeEventsPerMachine: null,
   downtimeDurationPerEvent: null,
+  productionDaysPerYear: null,
   productionHoursPerDay: null,
   dailyOutputKg: null,
   productMarginPerKg: null,
@@ -545,6 +568,60 @@ const maxReachedStep = ref(1)
 // Track which steps have been completed (have all required fields filled)
 const completedSteps = ref<Set<number>>(new Set())
 
+// Toggle for machine terminology
+const machinesTerminology = ref<'operation' | 'scope'>('scope')
+
+// Weight unit system
+const weightUnit = ref<'kg' | 'lb' | ''>('')
+
+// Conversion functions (for display purposes)
+const kgToLb = (kg: number): number => Math.round(kg * 2.20462 * 10) / 10
+const lbToKg = (lb: number): number => Math.round(lb / 2.20462 * 10) / 10
+
+// Computed labels based on terminology toggle
+const machinesLabel = computed(() => 
+  machinesTerminology.value === 'operation' ? 'Machines in Operation' : 'Machines in Scope'
+)
+
+const machinesHint = computed(() => 
+  machinesTerminology.value === 'operation' 
+    ? 'Number of machines currently operating in your facility'
+    : 'Number of machines within the project scope'
+)
+
+const dailyOutputLabel = computed(() => 
+  machinesTerminology.value === 'operation' 
+    ? 'Daily Output of machines in operation'
+    : 'Daily Output of machines in scope'
+)
+
+const dailyOutputHint = computed(() => 
+  machinesTerminology.value === 'operation' 
+    ? 'Average production output per day from operating machines'
+    : 'Average production output per day from machines in scope'
+)
+
+// Weight unit labels
+const weightUnitLabel = computed(() => weightUnit.value || 'unit')
+const weightUnitLong = computed(() => {
+  if (weightUnit.value === 'kg') return 'kilograms'
+  if (weightUnit.value === 'lb') return 'pounds'
+  return 'units'
+})
+
+// Handlers for weight input components
+const handleDailyOutputUpdate = (value: number | null) => {
+  inputs.value.dailyOutputKg = value
+}
+
+const handleDailyOutputUnitUpdate = (unit: 'kg' | 'lb' | '') => {
+  weightUnit.value = unit
+}
+
+const handleProductMarginUpdate = (value: number | null) => {
+  inputs.value.productMarginPerKg = value
+}
+
 // Manual calculations (not computed - only updated when calculate button is clicked)
 const calculations = ref<RoiCalculations>({
   annualDowntimeHours: 0,
@@ -566,6 +643,7 @@ const performCalculations = (): RoiCalculations => {
   const machinesInOperation = input.machinesInOperation || 0
   const downtimeEventsPerMachine = input.downtimeEventsPerMachine || 0
   const downtimeDurationPerEvent = input.downtimeDurationPerEvent || 0
+  const productionDaysPerYear = input.productionDaysPerYear || 0
   const productionHoursPerDay = input.productionHoursPerDay || 0
   const dailyOutputKg = input.dailyOutputKg || 0
   const productMarginPerKg = input.productMarginPerKg || 0
@@ -579,8 +657,14 @@ const performCalculations = (): RoiCalculations => {
                               downtimeDurationPerEvent * 
                               machinesInOperation
   
-  // Hourly production rate = Total daily output / Production hours per day
+  // Hourly production rate = Daily output / Production hours per day
   const hourlyProductionRate = productionHoursPerDay > 0 ? dailyOutputKg / productionHoursPerDay : 0
+  
+  // Annual production capacity = Daily output × Production days per year
+  const annualProductionCapacity = dailyOutputKg * productionDaysPerYear
+  
+  // Total annual production hours = Production days × Production hours per day
+  const annualProductionHours = productionDaysPerYear * productionHoursPerDay
   
   // C14: Lost Output (kg/year) = Downtime hours × Hourly production rate
   const annualProductionLoss = annualDowntimeHours * hourlyProductionRate
@@ -826,6 +910,7 @@ const isStepCompleted = (step: number): boolean => {
     // Check if basic customer data is filled
     return !!(
       inputs.value.machinesInOperation &&
+      inputs.value.productionDaysPerYear &&
       inputs.value.productionHoursPerDay &&
       inputs.value.dailyOutputKg &&
       inputs.value.downtimeEventsPerMachine &&
@@ -1053,13 +1138,14 @@ const exportToPDF = async () => {
       startY: yPos,
       head: [['Parameter', 'Value', 'Unit']],
       body: [
-        ['Machines in Operation', (input.machinesInOperation || 0).toString(), 'units'],
+        [machinesLabel.value, (input.machinesInOperation || 0).toString(), 'units'],
+        ['Production Days per Year', (input.productionDaysPerYear || 0).toString(), 'days'],
         ['Production Hours per Day', (input.productionHoursPerDay || 0).toString(), 'hours'],
-        ['Daily Output', formatNumber(input.dailyOutputKg || 0), 'kg'],
+        [dailyOutputLabel.value, weightUnit.value === 'kg' ? formatNumber(input.dailyOutputKg || 0) : weightUnit.value === 'lb' ? formatNumber(kgToLb(input.dailyOutputKg || 0)) : formatNumber(input.dailyOutputKg || 0), weightUnitLabel.value],
         ['Downtime Events per Machine/Year', (input.downtimeEventsPerMachine || 0).toString(), 'events'],
         ['Downtime Duration per Event', (input.downtimeDurationPerEvent || 0).toString(), 'hours'],
         ['Estimated Downtime Reduction per Event', (input.estimatedDowntimeReductionPerEvent || 0).toString(), 'hours'],
-        ['Product Margin per kg', `$${(input.productMarginPerKg || 0).toFixed(2)}`, 'per kg'],
+        [`Product Margin per ${weightUnitLabel.value}`, `$${weightUnit.value === 'kg' ? (input.productMarginPerKg || 0).toFixed(2) : weightUnit.value === 'lb' ? ((input.productMarginPerKg || 0) / 2.20462).toFixed(4) : (input.productMarginPerKg || 0).toFixed(2)}`, `per ${weightUnitLabel.value}`],
         ['Service Contract Cost', formatCurrency(input.serviceContractCost || 0), 'per year']
       ],
       theme: 'grid',
@@ -1647,6 +1733,51 @@ const exportToPDF = async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* Toggle Button Styles */
+.input-label-with-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.terminology-toggle {
+  flex-shrink: 0;
+}
+
+.toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  border-color: var(--buhler-primary);
+  color: var(--buhler-primary);
+  background: rgba(0, 155, 145, 0.05);
+}
+
+.toggle-btn.active {
+  background: var(--buhler-primary);
+  color: white;
+  border-color: var(--buhler-primary);
+}
+
+.toggle-btn i {
+  font-size: 0.75rem;
+}
+
+
+
 .input-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -2152,6 +2283,18 @@ const exportToPDF = async () => {
   
   .section-title {
     font-size: 1.125rem;
+  }
+  
+  .input-label-with-toggle {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+  
+  .toggle-btn {
+    align-self: flex-start;
+    font-size: 0.7rem;
+    padding: 0.375rem 0.625rem;
   }
   
   .preview-item {
