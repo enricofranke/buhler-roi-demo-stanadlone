@@ -13,7 +13,7 @@
       </div>
       <div class="header-actions">
         <button 
-          v-if="showResults"
+          v-if="currentStep === 3"
           @click="exportToPDF" 
           class="pdf-export-btn"
           :disabled="isExporting"
@@ -24,15 +24,51 @@
       </div>
     </div>
 
-    <!-- Input Section -->
-    <div class="calculator-inputs">
+    <!-- Step Progress -->
+    <div class="step-progress">
+      <div class="progress-container">
+        <div 
+          v-for="step in 3" 
+          :key="step"
+          class="progress-step"
+          :class="{ 
+            active: currentStep === step,
+            completed: completedSteps.has(step) && currentStep !== step,
+            clickable: step <= maxReachedStep
+          }"
+          @click="goToStep(step)"
+        >
+          <div class="step-circle">
+            <i v-if="completedSteps.has(step) && currentStep !== step" class="pi pi-check"></i>
+            <span v-else>{{ step }}</span>
+          </div>
+          <div class="step-info">
+            <span class="step-label">{{ getStepLabel(step) }}</span>
+            <span class="step-description">{{ getStepDescription(step) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step Content -->
+    <div class="step-content">
+      <!-- Step 1: Customer Information -->
+      <div v-if="currentStep === 1" class="step-container">
+        <div class="step-header">
+          <h3 class="step-title">
+            <i class="pi pi-user" aria-hidden="true"></i>
+            Customer Information
+          </h3>
+          <p class="step-subtitle">Please provide your production and operational details</p>
+        </div>
+        
       <div class="input-grid">
         <!-- Production Parameters -->
         <div class="input-section">
-          <h3 class="section-title">
+            <h4 class="section-title">
             <i class="pi pi-cog" aria-hidden="true"></i>
             Production Parameters
-          </h3>
+            </h4>
           
           <div class="input-group">
             <label for="machines-in-operation" class="input-label">
@@ -94,10 +130,10 @@
 
         <!-- Downtime Impact -->
         <div class="input-section">
-          <h3 class="section-title">
+            <h4 class="section-title">
             <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-            Downtime Impact
-          </h3>
+              Current Downtime Impact
+            </h4>
           
           <div class="input-group">
             <label for="downtime-events" class="input-label">
@@ -138,55 +174,67 @@
           </div>
 
           <div class="input-group">
-            <label for="downtime-reduction" class="input-label">
-              Estimated Downtime Reduction per Event
-              <span class="input-hint">Hours saved per downtime event with BRAM</span>
+              <label for="product-margin" class="input-label">
+                Product Margin per kg
+                <span class="input-hint">Profit margin per kg of product</span>
             </label>
-            <div class="input-wrapper">
+              <div class="input-wrapper currency">
+                <span class="currency-symbol">$</span>
               <input 
-                id="downtime-reduction"
-                v-model.number="inputs.estimatedDowntimeReductionPerEvent"
+                  id="product-margin"
+                  v-model.number="inputs.productMarginPerKg"
                 type="number" 
                 class="input-field"
                 min="0"
                 max="100"
-                step="1"
+                  step="0.01"
               />
-              <span class="input-unit">hours</span>
+                <span class="input-unit">per kg</span>
+              </div>
+            </div>
             </div>
           </div>
         </div>
 
-        <!-- Financial Parameters -->
-        <div class="input-section">
-          <h3 class="section-title">
-            <i class="pi pi-dollar" aria-hidden="true"></i>
-            Financial Parameters
+      <!-- Step 2: Bühler Sales Information -->
+      <div v-if="currentStep === 2" class="step-container">
+        <div class="step-header">
+          <h3 class="step-title">
+            <i class="pi pi-briefcase" aria-hidden="true"></i>
+            Bühler Sales Information
           </h3>
+          <p class="step-subtitle">Sales team: Please provide service solution details</p>
+        </div>
+        
+        <div class="input-grid sales-grid">
+          <div class="input-section">
+            <h4 class="section-title">
+              <i class="pi pi-wrench" aria-hidden="true"></i>
+              BRAM Service Benefits
+            </h4>
           
           <div class="input-group">
-            <label for="product-margin" class="input-label">
-              Product Margin per kg
-              <span class="input-hint">Profit margin per kg of product</span>
+              <label for="downtime-reduction" class="input-label">
+                Estimated Downtime Reduction with BRAM (in hours per event)
+                <span class="input-hint">Hours saved per downtime event with BRAM solution</span>
             </label>
-            <div class="input-wrapper currency">
-              <span class="currency-symbol">$</span>
+              <div class="input-wrapper">
               <input 
-                id="product-margin"
-                v-model.number="inputs.productMarginPerKg"
+                  id="downtime-reduction"
+                  v-model.number="inputs.estimatedDowntimeReductionPerEvent"
                 type="number" 
                 class="input-field"
                 min="0"
                 max="100"
-                step="0.01"
+                  step="1"
               />
-              <span class="input-unit">per kg</span>
+                <span class="input-unit">hours</span>
             </div>
           </div>
 
           <div class="input-group">
             <label for="service-cost" class="input-label">
-              Service Contract Cost
+                Service Contract Cost / Year
               <span class="input-hint">Annual service agreement cost</span>
             </label>
             <div class="input-wrapper currency">
@@ -201,180 +249,240 @@
                 step="1000"
               />
               <span class="input-unit">per year</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customer Data Preview -->
+          <div class="input-section customer-preview">
+            <h4 class="section-title">
+              <i class="pi pi-eye" aria-hidden="true"></i>
+              Customer Data Overview
+            </h4>
+            <div class="preview-grid">
+              <div class="preview-item">
+                <span class="preview-label">Machines</span>
+                <span class="preview-value">{{ inputs.machinesInOperation || 0 }} units</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Production Hours/Day</span>
+                <span class="preview-value">{{ inputs.productionHoursPerDay || 0 }} hours</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Daily Output</span>
+                <span class="preview-value">{{ formatNumber(inputs.dailyOutputKg || 0) }} kg</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Downtime Events/Year</span>
+                <span class="preview-value">{{ inputs.downtimeEventsPerMachine || 0 }} events</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Downtime Duration</span>
+                <span class="preview-value">{{ inputs.downtimeDurationPerEvent || 0 }} hours</span>
+              </div>
+              <div class="preview-item">
+                <span class="preview-label">Product Margin</span>
+                <span class="preview-value">${{ (inputs.productMarginPerKg || 0).toFixed(2) }}/kg</span>
+              </div>
             </div>
           </div>
         </div>
       </div>
       
-      <!-- Calculate Button -->
-      <div class="calculate-section">
-        <button 
-          @click="calculateResults" 
-          class="calculate-btn"
-        >
-          <i class="pi pi-calculator" aria-hidden="true"></i>
-          Calculate ROI
-        </button>
-      </div>
-    </div>
-
-          <!-- Results Section -->
-      <div v-if="showResults" class="calculator-results">
-        <!-- Current Downtime Impact -->
-        <div class="metrics-section">
-          <h3 class="section-header">Current Downtime Impact</h3>
-        <div class="results-grid">
-          <div class="metric-card warning">
-            <div class="metric-icon">
-              <i class="pi pi-clock" aria-hidden="true"></i>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label">Annual Downtime</span>
-              <span class="metric-value">{{ formatNumber(calculations.annualDowntimeHours) }}</span>
-              <span class="metric-sublabel">Hours lost per year</span>
-            </div>
-          </div>
-
-          <div class="metric-card info">
-            <div class="metric-icon">
-              <i class="pi pi-box" aria-hidden="true"></i>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label">Production Loss</span>
-              <span class="metric-value">{{ formatNumber(calculations.annualProductionLoss) }}</span>
-              <span class="metric-sublabel">kg lost per year</span>
-            </div>
-          </div>
-
-          <div class="metric-card danger">
-            <div class="metric-icon">
-              <i class="pi pi-dollar" aria-hidden="true"></i>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label">USD Loss per Year</span>
-              <span class="metric-value">{{ formatCurrency(calculations.annualRevenueLoss) }}</span>
-              <span class="metric-sublabel">Revenue lost annually</span>
-            </div>
-          </div>
+      <!-- Step 3: Results -->
+      <div v-if="currentStep === 3" class="step-container">
+        <div class="step-header">
+          <h3 class="step-title">
+            <i class="pi pi-chart-line" aria-hidden="true"></i>
+            ROI Analysis Results
+          </h3>
+          <p class="step-subtitle">Your complete return on investment analysis</p>
         </div>
-      </div>
-
-      <!-- Impact of BRAM -->
-      <div class="metrics-section">
-        <h3 class="section-header">Impact of BRAM</h3>
-        <div class="results-grid">
-          <div class="metric-card success">
-            <div class="metric-icon">
-              <i class="pi pi-clock" aria-hidden="true"></i>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label">Downtime Reduction</span>
-              <span class="metric-value">{{ formatNumber(calculations.additionalUptimeHours) }}</span>
-              <span class="metric-sublabel">Hours saved annually</span>
-            </div>
-          </div>
-
-          <div class="metric-card success">
-            <div class="metric-icon">
-              <i class="pi pi-box" aria-hidden="true"></i>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label">Reduction of Production Loss</span>
-              <span class="metric-value">{{ formatNumber(calculations.additionalOutput) }}</span>
-              <span class="metric-sublabel">kg saved per year</span>
-            </div>
-          </div>
-
-          <div class="metric-card success">
-            <div class="metric-icon">
-              <i class="pi pi-chart-line" aria-hidden="true"></i>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label">Reduction of Downtime Costs</span>
-              <span class="metric-value">{{ formatCurrency(calculations.potentialSavings) }}</span>
-              <span class="metric-sublabel">Additional margin per year</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ROI Calculation -->
-      <div class="metrics-section">
-        <h3 class="section-header">ROI Calculation</h3>
-        <div class="results-grid">
-          <div class="metric-card primary">
-            <div class="metric-icon">
-              <i class="pi pi-percentage" aria-hidden="true"></i>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label">Return on Investment</span>
-              <span class="metric-value">{{ formatPercentage(calculations.roi) }}</span>
-              <span class="metric-sublabel">Annual ROI</span>
-            </div>
-          </div>
-
-          <div class="metric-card info">
-            <div class="metric-icon">
-              <i class="pi pi-calendar" aria-hidden="true"></i>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label">Payback Period</span>
-              <span class="metric-value">{{ formatMonths(calculations.paybackMonths) }}</span>
-              <span class="metric-sublabel">ROI in years</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Detailed Financial Summary -->
-      <div class="financial-summary">
-        <h3 class="summary-title">
-          <i class="pi pi-chart-bar" aria-hidden="true"></i>
-          Detailed Financial Analysis
-        </h3>
         
-        <!-- Current Situation -->
-        <div class="summary-section">
-          <h4 class="summary-section-title">Current Downtime Impact</h4>
-          <div class="summary-items">
-            <div class="summary-item">
-              <span class="summary-label">Annual Revenue Loss</span>
-              <span class="summary-value negative">{{ formatCurrency(calculations.annualRevenueLoss) }}</span>
+        <div v-if="showResults" class="calculator-results">
+          <!-- Current Downtime Impact -->
+          <div class="metrics-section">
+            <h4 class="section-header">Current Downtime Impact</h4>
+            <div class="results-grid">
+              <div class="metric-card warning">
+                <div class="metric-icon">
+                  <i class="pi pi-clock" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Annual Downtime</span>
+                  <span class="metric-value">{{ formatNumber(calculations.annualDowntimeHours) }}</span>
+                  <span class="metric-sublabel">Hours lost per year</span>
+                </div>
+              </div>
+
+              <div class="metric-card info">
+                <div class="metric-icon">
+                  <i class="pi pi-box" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Production Loss</span>
+                  <span class="metric-value">{{ formatNumber(calculations.annualProductionLoss) }}</span>
+                  <span class="metric-sublabel">kg lost per year</span>
+                </div>
+              </div>
+
+              <div class="metric-card danger">
+                <div class="metric-icon">
+                  <i class="pi pi-dollar" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">USD Loss per Year</span>
+                  <span class="metric-value">{{ formatCurrency(calculations.annualRevenueLoss) }}</span>
+                  <span class="metric-sublabel">Revenue lost annually</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- BRAM Impact -->
-        <div class="summary-section">
-          <h4 class="summary-section-title">With BRAM Service</h4>
-          <div class="summary-items">
-            <div class="summary-item">
-              <span class="summary-label">Estimated Reduction of Downtime Costs</span>
-              <span class="summary-value positive">{{ formatCurrency(calculations.potentialSavings) }}</span>
+          <!-- Impact of BRAM -->
+          <div class="metrics-section">
+            <h4 class="section-header">Impact of BRAM</h4>
+            <div class="results-grid">
+              <div class="metric-card success">
+                <div class="metric-icon">
+                  <i class="pi pi-clock" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Downtime Reduction</span>
+                  <span class="metric-value">{{ formatNumber(calculations.additionalUptimeHours) }}</span>
+                  <span class="metric-sublabel">Hours saved annually</span>
+                </div>
+              </div>
+
+              <div class="metric-card success">
+                <div class="metric-icon">
+                  <i class="pi pi-box" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Reduction of Production Loss</span>
+                  <span class="metric-value">{{ formatNumber(calculations.additionalOutput) }}</span>
+                  <span class="metric-sublabel">kg saved per year</span>
+                </div>
+              </div>
+
+              <div class="metric-card success">
+                <div class="metric-icon">
+                  <i class="pi pi-chart-line" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Reduction of Downtime Costs</span>
+                  <span class="metric-value">{{ formatCurrency(calculations.potentialSavings) }}</span>
+                  <span class="metric-sublabel">Additional margin per year</span>
+                </div>
+              </div>
             </div>
-            <div class="summary-item">
-              <span class="summary-label">Annual Service Contract Cost</span>
-              <span class="summary-value negative">{{ formatCurrency(inputs.serviceContractCost || 0) }}</span>
+          </div>
+
+          <!-- ROI Calculation -->
+          <div class="metrics-section">
+            <h4 class="section-header">ROI Calculation</h4>
+            <div class="results-grid">
+              <div class="metric-card primary">
+                <div class="metric-icon">
+                  <i class="pi pi-percentage" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Return on Investment</span>
+                  <span class="metric-value">{{ formatPercentage(calculations.roi) }}</span>
+                  <span class="metric-sublabel">Annual ROI</span>
+                </div>
+              </div>
+
+              <div class="metric-card info">
+                <div class="metric-icon">
+                  <i class="pi pi-calendar" aria-hidden="true"></i>
+                </div>
+                <div class="metric-content">
+                  <span class="metric-label">Payback Period</span>
+                  <span class="metric-value">{{ formatMonths(calculations.paybackMonths) }}</span>
+                  <span class="metric-sublabel">ROI in years</span>
+                </div>
+              </div>
             </div>
-            <div class="summary-item total">
-              <span class="summary-label">Net Annual Benefit</span>
-              <span class="summary-value" :class="{positive: calculations.netSavings > 0, negative: calculations.netSavings < 0}">
-                {{ formatCurrency(calculations.netSavings) }}
-              </span>
+          </div>
+
+          <!-- Detailed Financial Summary -->
+          <div class="financial-summary">
+            <h4 class="summary-title">
+              <i class="pi pi-chart-bar" aria-hidden="true"></i>
+              Detailed Financial Analysis
+            </h4>
+            
+            <!-- Current Situation -->
+            <div class="summary-section">
+              <h5 class="summary-section-title">Current Downtime Impact</h5>
+              <div class="summary-items">
+                <div class="summary-item">
+                  <span class="summary-label">Annual Revenue Loss</span>
+                  <span class="summary-value negative">{{ formatCurrency(calculations.annualRevenueLoss) }}</span>
+                </div>
+              </div>
             </div>
+
+            <!-- BRAM Impact -->
+            <div class="summary-section">
+              <h5 class="summary-section-title">With BRAM Service</h5>
+              <div class="summary-items">
+                <div class="summary-item">
+                  <span class="summary-label">Estimated Reduction of Downtime Costs</span>
+                  <span class="summary-value positive">{{ formatCurrency(calculations.potentialSavings) }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Annual Service Contract Cost</span>
+                  <span class="summary-value negative">{{ formatCurrency(inputs.serviceContractCost || 0) }}</span>
+                </div>
+                <div class="summary-item total">
+                  <span class="summary-label">Net Annual Benefit</span>
+                  <span class="summary-value" :class="{positive: calculations.netSavings > 0, negative: calculations.netSavings < 0}">
+                    {{ formatCurrency(calculations.netSavings) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROI Visualization -->
+          <div class="chart-container">
+            <h4 class="chart-title">ROI Projection Over Time</h4>
+            <div 
+              ref="chartRef"
+              class="roi-chart"
+            ></div>
           </div>
         </div>
       </div>
-
-              <!-- ROI Visualization -->
-        <div class="chart-container">
-          <h3 class="chart-title">ROI Projection Over Time</h3>
-          <div 
-            ref="chartRef"
-            class="roi-chart"
-          ></div>
-        </div>
     </div>
+
+    <!-- Step Navigation -->
+    <div class="step-navigation">
+        <button 
+        v-if="currentStep > 1"
+        @click="previousStep"
+        class="nav-btn nav-btn-secondary"
+      >
+        <i class="pi pi-arrow-left"></i>
+        Previous
+      </button>
+      
+      <div class="nav-spacer"></div>
+      
+            <button 
+        v-if="currentStep < 3"
+        @click="nextStep"
+        class="nav-btn nav-btn-primary"
+        :disabled="!canProceedToNextStep"
+      >
+        Next
+        <i class="pi pi-arrow-right"></i>
+      </button>
+    </div>
+
+
   </div>
 </template>
 
@@ -429,6 +537,13 @@ const isExporting = ref(false)
 
 // Show results state
 const showResults = ref(false)
+
+// Step navigation state
+const currentStep = ref(1)
+const maxReachedStep = ref(1)
+
+// Track which steps have been completed (have all required fields filled)
+const completedSteps = ref<Set<number>>(new Set())
 
 // Manual calculations (not computed - only updated when calculate button is clicked)
 const calculations = ref<RoiCalculations>({
@@ -684,11 +799,99 @@ const updateChart = () => {
   }
 }
 
+// Step navigation functions
+const getStepLabel = (step: number): string => {
+  switch (step) {
+    case 1: return 'Customer Info'
+    case 2: return 'Sales Input'
+    case 3: return 'Results'
+    default: return ''
+  }
+}
+
+const getStepDescription = (step: number): string => {
+  switch (step) {
+    case 1: return 'Production & operational details'
+    case 2: return 'Service solution parameters'
+    case 3: return 'ROI analysis & recommendations'
+    default: return ''
+  }
+}
+
+
+
+// Check if a specific step is completed
+const isStepCompleted = (step: number): boolean => {
+  if (step === 1) {
+    // Check if basic customer data is filled
+    return !!(
+      inputs.value.machinesInOperation &&
+      inputs.value.productionHoursPerDay &&
+      inputs.value.dailyOutputKg &&
+      inputs.value.downtimeEventsPerMachine &&
+      inputs.value.downtimeDurationPerEvent &&
+      inputs.value.productMarginPerKg
+    )
+  } else if (step === 2) {
+    // Check if sales data is filled
+    return !!(
+      inputs.value.estimatedDowntimeReductionPerEvent &&
+      inputs.value.serviceContractCost
+    )
+  } else if (step === 3) {
+    // Results step is completed when calculations are done
+    return showResults.value
+  }
+  return false
+}
+
+const canProceedToNextStep = computed(() => {
+  return isStepCompleted(currentStep.value)
+})
+
+const goToStep = (step: number) => {
+  if (step <= maxReachedStep.value) {
+    currentStep.value = step
+    // Always auto-calculate when going to results step (manual click or navigation)
+    if (step === 3) {
+      calculateResults()
+    }
+  }
+}
+
+const nextStep = () => {
+  if (currentStep.value < 3 && canProceedToNextStep.value) {
+    // Mark current step as completed before moving to next
+    if (isStepCompleted(currentStep.value)) {
+      completedSteps.value.add(currentStep.value)
+    }
+    
+    currentStep.value++
+    if (currentStep.value > maxReachedStep.value) {
+      maxReachedStep.value = currentStep.value
+    }
+    // Auto-calculate when reaching results step
+    if (currentStep.value === 3) {
+      calculateResults()
+    }
+  }
+}
+
+const previousStep = () => {
+  if (currentStep.value > 1) {
+    currentStep.value--
+  }
+}
+
 // Calculate results function
 const calculateResults = () => {
   // Perform calculations and update the calculations ref
   calculations.value = performCalculations()
   showResults.value = true
+  
+  // Mark step 3 as completed when results are calculated
+  completedSteps.value.add(3)
+  
   // Initialize and update chart after results are shown
   nextTick(async () => {
     await initChart()
@@ -712,6 +915,22 @@ watch(showResults, (newValue) => {
     })
   }
 })
+
+// Watch inputs to automatically track completed steps
+watch(inputs, () => {
+  // Check and update completed steps based on current data
+  if (isStepCompleted(1)) {
+    completedSteps.value.add(1)
+  } else {
+    completedSteps.value.delete(1)
+  }
+  
+  if (isStepCompleted(2)) {
+    completedSteps.value.add(2)
+  } else {
+    completedSteps.value.delete(2)
+  }
+}, { deep: true, immediate: true })
 
 // Lifecycle hooks
 onMounted(() => {
@@ -1174,27 +1393,250 @@ const exportToPDF = async () => {
   font-size: 1rem;
 }
 
-.header-badge {
+/* Step Progress Styles */
+.step-progress {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.progress-container {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.progress-step {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 1.5rem 2rem;
-  background: linear-gradient(135deg, var(--buhler-primary), var(--buhler-primary-700));
-  border-radius: 12px;
-  color: white;
+  gap: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 2;
+  position: relative;
+}
+
+.progress-step.clickable:hover .step-circle {
+  transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(0, 155, 145, 0.3);
 }
 
-.badge-label {
-  font-size: 0.875rem;
-  font-weight: 500;
-  opacity: 0.9;
-  margin-bottom: 0.25rem;
+.progress-step:not(.clickable) {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
-.badge-value {
-  font-size: 2rem;
+.step-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 700;
+  font-size: 1.25rem;
+  transition: all 0.3s ease;
+  border: 3px solid #e2e8f0;
+  background: white;
+  color: #64748b;
+}
+
+.progress-step.active .step-circle {
+  background: var(--buhler-primary);
+  color: white;
+  border-color: var(--buhler-primary);
+  box-shadow: 0 4px 12px rgba(0, 155, 145, 0.3);
+}
+
+.progress-step.completed .step-circle {
+  background: #22c55e;
+  color: white;
+  border-color: #22c55e;
+}
+
+.step-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.25rem;
+  max-width: 180px;
+}
+
+.step-label {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1rem;
+}
+
+.step-description {
+  font-size: 0.75rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.progress-step.active .step-label {
+  color: var(--buhler-primary);
+}
+
+.progress-step.completed .step-label {
+  color: #22c55e;
+}
+
+/* Step Content Styles */
+.step-content {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.step-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.step-header {
+  text-align: center;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f1f5f9;
+}
+
+.step-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+}
+
+.step-title i {
+  color: var(--buhler-primary);
+}
+
+.step-subtitle {
+  font-size: 1.125rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Sales Grid Specific */
+.sales-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+}
+
+.customer-preview {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.preview-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.preview-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.preview-item:last-child {
+  border-bottom: none;
+}
+
+.preview-label {
+  font-weight: 500;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.preview-value {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.875rem;
+}
+
+/* Step Navigation Styles */
+.step-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.nav-spacer {
+  flex: 1;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nav-btn-primary {
+  background: var(--buhler-primary);
+  color: white;
+}
+
+.nav-btn-primary:hover:not(:disabled) {
+  background: var(--buhler-primary-700);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 155, 145, 0.2);
+}
+
+.nav-btn-secondary {
+  background: white;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+}
+
+.nav-btn-secondary:hover {
+  border-color: #cbd5e1;
+  color: #475569;
+  transform: translateY(-1px);
+}
+
+.calculate-btn-final {
+  background: #22c55e;
+  font-size: 1rem;
+  padding: 0.875rem 2rem;
+}
+
+.calculate-btn-final:hover:not(:disabled) {
+  background: #16a34a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.3);
 }
 
 /* Input Section Styles */
@@ -1574,32 +2016,167 @@ const exportToPDF = async () => {
 }
 
 /* Responsive Design */
-  @media (max-width: 768px) {
-    .calculator-header {
-      flex-direction: column;
-      gap: 1.5rem;
-    }
+@media (max-width: 1024px) {
+  .sales-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .step-info {
+    max-width: 140px;
+  }
+  
+  .step-label {
+    font-size: 0.875rem;
+  }
+  
+  .step-description {
+    font-size: 0.7rem;
+  }
+}
 
-    .header-actions {
-      flex-direction: column;
-      align-self: stretch;
-    }
+@media (max-width: 768px) {
+  .roi-calculator {
+    padding: 1rem;
+    gap: 1.5rem;
+  }
 
-    .header-badge {
-      align-self: stretch;
-    }
+  .calculator-header {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    align-self: stretch;
+  }
+
+  .step-progress {
+    padding: 1.5rem;
+  }
+  
+  .progress-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  .step-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 1rem;
+  }
+  
+  .step-info {
+    max-width: 200px;
+  }
+
+  .step-content {
+    padding: 1.5rem;
+  }
+  
+  .step-header {
+    text-align: left;
+  }
+  
+  .step-title {
+    justify-content: flex-start;
+    font-size: 1.5rem;
+  }
+  
+  .step-subtitle {
+    font-size: 1rem;
+  }
 
   .input-grid {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
+  
+  .sales-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
 
   .results-grid {
     grid-template-columns: 1fr;
   }
+  
+  .step-navigation {
+    padding: 1rem 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .nav-spacer {
+    display: none;
+  }
+  
+  .nav-btn {
+    flex: 1;
+    justify-content: center;
+    min-width: 120px;
+  }
 
   .roi-chart {
     height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .roi-calculator {
+    padding: 0.75rem;
+  }
+  
+  .calculator-header,
+  .step-progress,
+  .step-content,
+  .step-navigation {
+    padding: 1rem;
+  }
+  
+  .step-title {
+    font-size: 1.25rem;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .progress-container {
+    gap: 1.5rem;
+  }
+  
+  .input-section {
+    gap: 1rem;
+  }
+  
+  .section-title {
+    font-size: 1.125rem;
+  }
+  
+  .preview-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .nav-btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .metric-card {
+    padding: 1rem;
+  }
+  
+  .metric-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+  
+  .metric-value {
+    font-size: 1.5rem;
   }
 }
 

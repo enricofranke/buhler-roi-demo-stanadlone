@@ -1,79 +1,184 @@
-# Bühler BRAM Calculator
+# Bühler ROI Calculator - Deployment Guide
 
-A professional ROI calculator for Bühler's BRAM service solutions with corporate-grade PDF export functionality.
+## 📋 Übersicht
 
-## Features
+Diese Anwendung ist ein ROI-Calculator für Bühler BRAM Service-Lösungen, gebaut mit Nuxt.js und deployed auf Google Cloud Run.
 
-- 🧮 **ROI Calculator** - Interactive calculation of return on investment
-- 📊 **Data Visualization** - ECharts-powered ROI projection charts  
-- 📄 **Professional PDF Export** - Corporate-branded reports with jsPDF
-- 🎨 **Corporate Design** - Bühler brand colors and styling
-- 🔒 **Basic Authentication** - Protected demo access
-- ☁️ **Cloud Ready** - Optimized for Google Cloud Run deployment
+## 🚀 Deployment auf Google Cloud
 
-## Authentication
+### Voraussetzungen
 
-The production deployment uses Basic Authentication:
+1. **Google Cloud SDK installiert**
+   ```bash
+   # Installation auf macOS
+   brew install --cask google-cloud-sdk
+   
+   # Oder direkt von Google herunterladen
+   # https://cloud.google.com/sdk/docs/install
+   ```
 
-- **Username**: `buhler`
-- **Password**: `demo2024`
+2. **Authentifizierung**
+   ```bash
+   gcloud auth login
+   gcloud config set project YOUR_PROJECT_ID
+   ```
 
-## Development Setup
+3. **APIs aktivieren**
+   ```bash
+   gcloud services enable cloudbuild.googleapis.com
+   gcloud services enable run.googleapis.com
+   gcloud services enable containerregistry.googleapis.com
+   ```
 
-```bash
-# Install dependencies
-npm install
+### 🔄 Update/Deployment Prozess
 
-# Start development server
-npm run dev
+#### Option 1: Automatisches Deployment via Git Push
+
+1. **Code-Änderungen committen**
+   ```bash
+   git add .
+   git commit -m "Update: Beschreibung der Änderungen"
+   git push origin main
+   ```
+
+2. **Cloud Build Trigger ausführen** (falls konfiguriert)
+   - Das Deployment erfolgt automatisch bei Push auf den main Branch
+   - Build-Status in der Google Cloud Console überwachen
+
+#### Option 2: Manuelles Deployment
+
+1. **Cloud Build manuell starten**
+   ```bash
+   gcloud builds submit --config cloudbuild.yaml .
+   ```
+
+2. **Deployment-Status überprüfen**
+   ```bash
+   gcloud run services describe buhler-roi-calculator --region=europe-west1
+   ```
+
+### 📦 Deployment-Konfiguration
+
+#### Cloud Build (`cloudbuild.yaml`)
+- **Docker Image**: `gcr.io/$PROJECT_ID/buhler-roi-calculator`
+- **Region**: `europe-west1`
+- **Port**: `8080`
+- **Memory**: `1Gi`
+- **CPU**: `1`
+- **Instanzen**: `0-10` (Auto-scaling)
+
+#### Umgebungsvariablen
+```yaml
+BASIC_AUTH_USER=buhler
+BASIC_AUTH_PASSWORD=demo2024
+NODE_ENV=production
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+### 🛠 Lokale Entwicklung
 
-## Production Deployment
+1. **Dependencies installieren**
+   ```bash
+   npm install
+   ```
 
-### Docker
+2. **Development Server starten**
+   ```bash
+   npm run dev
+   ```
+   Anwendung läuft auf: `http://localhost:3003`
+
+3. **Production Build testen**
+   ```bash
+   npm run build
+   npm run start
+   ```
+
+### 🐳 Docker Entwicklung
+
+1. **Docker Image lokal bauen**
+   ```bash
+   docker build -t buhler-roi-calculator .
+   ```
+
+2. **Container lokal ausführen**
+   ```bash
+   docker run -p 8080:8080 buhler-roi-calculator
+   ```
+   Anwendung läuft auf: `http://localhost:8080`
+
+### 📋 Deployment Checklist
+
+#### Vor dem Deployment:
+- [ ] Code getestet (`npm run dev`)
+- [ ] Build erfolgreich (`npm run build`)
+- [ ] Linting sauber (`npm run lint`)
+- [ ] Git Repository aktuell (`git status`)
+
+#### Deployment:
+- [ ] `git add . && git commit -m "Update: ..." && git push`
+- [ ] Oder: `gcloud builds submit --config cloudbuild.yaml .`
+
+#### Nach dem Deployment:
+- [ ] Cloud Run Service Status prüfen
+- [ ] Live-URL testen
+- [ ] Funktionalität überprüfen
+
+### 🔗 Nützliche Links
+
+- **Google Cloud Console**: https://console.cloud.google.com/
+- **Cloud Build**: https://console.cloud.google.com/cloud-build
+- **Cloud Run**: https://console.cloud.google.com/run
+- **Container Registry**: https://console.cloud.google.com/gcr
+
+### 🆘 Troubleshooting
+
+#### Build Fehler
 ```bash
-# Build image
-docker build -t buhler-roi-calculator .
-
-# Run container
-docker run -p 8080:8080 buhler-roi-calculator
+# Build Logs anzeigen
+gcloud builds list --limit=1
+gcloud builds log [BUILD_ID]
 ```
 
-### Google Cloud Run
-The project includes `cloudbuild.yaml` for automated deployment:
+#### Service Fehler
+```bash
+# Service Logs anzeigen
+gcloud run services logs read buhler-roi-calculator --region=europe-west1
+```
 
-1. Connect repository to Cloud Build
-2. Push to `main` branch triggers automatic deployment
-3. Deployed to `europe-west1` region
-4. Includes Basic Auth protection
+#### Rollback
+```bash
+# Vorherige Version deployen
+gcloud run services replace-traffic buhler-roi-calculator --to-revisions=REVISION_NAME=100 --region=europe-west1
+```
 
-### Environment Variables
+### 🔧 Konfiguration anpassen
 
-- `BASIC_AUTH_USER` - Basic auth username (default: "buhler")
-- `BASIC_AUTH_PASSWORD` - Basic auth password (default: "demo2024")
-- `NODE_ENV` - Environment mode (production enables auth)
+#### Memory/CPU ändern
+```bash
+gcloud run services update buhler-roi-calculator \
+  --memory=2Gi \
+  --cpu=2 \
+  --region=europe-west1
+```
 
-## API Endpoints
+#### Umgebungsvariablen aktualisieren
+```bash
+gcloud run services update buhler-roi-calculator \
+  --set-env-vars="BASIC_AUTH_PASSWORD=neues_passwort" \
+  --region=europe-west1
+```
 
-- `/` - ROI Calculator interface
-- `/api/health` - Health check endpoint for monitoring
+---
 
-## PDF Export Features
+## 🚨 Wichtige Hinweise
 
-- Executive summary with key metrics
-- Detailed input parameters table
-- Current downtime impact analysis
-- BRAM service benefits breakdown
-- Financial analysis with ROI calculations
-- Interactive chart export with optimized scaling
-- Two-page professional layout
+- **Basic Auth**: Die Anwendung ist mit Basic Authentication geschützt
+  - User: `buhler`
+  - Password: `demo2024`
+- **Region**: Deployment erfolgt in `europe-west1`
+- **Auto-Scaling**: Automatische Skalierung von 0-10 Instanzen
+- **HTTPS**: Cloud Run stellt automatisch HTTPS zur Verfügung
 
-## Tech Stack
+---
 
-- **Frontend**: Nuxt 3, Vue 3, TypeScript
-- **Charts**: ECharts, Vue-ECharts
-- **PDF**: jsPDF, jsPDF-AutoTable
-- **Styling**: PrimeVue, PrimeIcons
-- **Deployment**: Docker, Google Cloud Run, Cloud Build
+**Letzte Aktualisierung**: $(date)
