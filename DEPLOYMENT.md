@@ -56,7 +56,7 @@ gcloud builds submit --config cloudbuild.yaml .
 
 ### Basic Auth Konfiguration
 - **Username**: `buhler`
-- **Password**: `demo2024`
+- **Password**: `demo2025`
 - Konfiguriert in GitHub Actions Workflow
 
 ### Service Account Key

@@ -70,7 +70,7 @@ Diese Anwendung ist ein ROI-Calculator für Bühler BRAM Service-Lösungen, geba
 #### Umgebungsvariablen
 ```yaml
 BASIC_AUTH_USER=buhler
-BASIC_AUTH_PASSWORD=demo2024
+BASIC_AUTH_PASSWORD=demo2025
 NODE_ENV=production
 ```
 
@@ -174,7 +174,7 @@ gcloud run services update buhler-roi-calculator \
 
 - **Basic Auth**: Die Anwendung ist mit Basic Authentication geschützt
   - User: `buhler`
-  - Password: `demo2024`
+  - Password: `demo2025`
 - **Region**: Deployment erfolgt in `europe-west1`
 - **Auto-Scaling**: Automatische Skalierung von 0-10 Instanzen
 - **HTTPS**: Cloud Run stellt automatisch HTTPS zur Verfügung

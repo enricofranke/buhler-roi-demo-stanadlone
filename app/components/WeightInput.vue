@@ -1,9 +1,25 @@
 <template>
   <div class="weight-input-component">
-    <label v-if="label" :for="inputId" class="input-label">
-      {{ label }}
-      <span v-if="hint" class="input-hint">{{ hint }}</span>
-    </label>
+    <div class="input-label-with-toggle">
+      <label v-if="label" :for="inputId" class="input-label">
+        {{ label }}
+        <span v-if="hint" class="input-hint">{{ hint }}</span>
+      </label>
+      <div class="toggle-group">
+        <button
+          type="button"
+          class="toggle-btn"
+          :class="{ active: selectedUnit === 'kg' }"
+          @click="setUnit('kg')"
+        >kg</button>
+        <button
+          type="button"
+          class="toggle-btn"
+          :class="{ active: selectedUnit === 'lb' }"
+          @click="setUnit('lb')"
+        >lb</button>
+      </div>
+    </div>
     <div class="input-wrapper weight-input">
       <input 
         :id="inputId"
@@ -11,21 +27,13 @@
         type="text" 
         class="input-field"
         :placeholder="placeholder"
-      />
-      <select 
-        v-model="selectedUnit" 
-        class="unit-selector"
       >
-        <option value="">-</option>
-        <option value="kg">kg</option>
-        <option value="lb">lb</option>
-      </select>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 
 interface Props {
   modelValue?: number | null
@@ -33,6 +41,7 @@ interface Props {
   hint?: string
   placeholder?: string
   inputId?: string
+  unit?: 'kg' | 'lb' | ''
 }
 
 interface Emits {
@@ -45,13 +54,14 @@ const props = withDefaults(defineProps<Props>(), {
   label: '',
   hint: '',
   placeholder: 'e.g. 1000kg, 2200lb, or just 1000',
-  inputId: 'weight-input'
+  inputId: 'weight-input',
+  unit: ''
 })
 
 const emit = defineEmits<Emits>()
 
-// Internal unit state
-const selectedUnit = ref<'kg' | 'lb' | ''>('')
+// Internal unit state, initialized from prop if provided
+const selectedUnit = ref<'kg' | 'lb' | ''>(props.unit)
 
 // Conversion functions with proper rounding
 const kgToLb = (kg: number): number => Math.round(kg * 2.20462 * 10) / 10
@@ -69,15 +79,21 @@ const parseWeightInput = (input: string): { value: number; unit: 'kg' | 'lb' | '
   const lbMatch = cleanInput.match(/^(\d+(?:\.\d+)?)\s*(?:lb|lbs|pound|pounds)$/i)
   
   if (kgMatch) {
-    return { value: parseFloat(kgMatch[1]), unit: 'kg' }
+    return { value: parseFloat(kgMatch[1] as string), unit: 'kg' }
   } else if (lbMatch) {
-    return { value: parseFloat(lbMatch[1]), unit: 'lb' }
+    return { value: parseFloat(lbMatch[1] as string), unit: 'lb' }
   } else if (!isNaN(parseFloat(cleanInput))) {
     // Pure number, use current unit from dropdown (if selected)
     return { value: parseFloat(cleanInput), unit: selectedUnit.value }
   }
   
   return null
+}
+
+// Public helper to set unit from template toggle
+const setUnit = (unit: 'kg' | 'lb') => {
+  selectedUnit.value = unit
+  emit('update:unit', unit)
 }
 
 // Display value computed property
@@ -121,15 +137,17 @@ const displayValue = computed({
 // Watch for unit changes to update display and emit unit changes
 watch(selectedUnit, (newUnit) => {
   emit('update:unit', newUnit)
-  
-  // Trigger reactivity update when unit changes
-  if (props.modelValue) {
-    nextTick(() => {
-      // Force update of computed display value
-      displayValue.value = displayValue.value
-    })
-  }
 })
+
+// Keep internal unit in sync with external prop updates
+watch(
+  () => props.unit,
+  (newUnit) => {
+    if (newUnit !== selectedUnit.value) {
+      selectedUnit.value = newUnit
+    }
+  }
+)
 
 // Expose the current unit for parent components
 defineExpose({
@@ -147,6 +165,13 @@ defineExpose({
   gap: 0.5rem;
 }
 
+.input-label-with-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
 .input-label {
   display: flex;
   flex-direction: column;
@@ -160,6 +185,38 @@ defineExpose({
   font-weight: 400;
   color: #64748b;
   font-size: 0.75rem;
+}
+
+.toggle-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.75rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn:hover {
+  border-color: var(--buhler-primary);
+  color: var(--buhler-primary);
+  background: rgba(0, 155, 145, 0.05);
+}
+
+.toggle-btn.active {
+  background: var(--buhler-primary);
+  color: white;
+  border-color: var(--buhler-primary);
 }
 
 .input-wrapper {
@@ -208,37 +265,11 @@ defineExpose({
   flex: 1;
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
-  border-right: none;
-}
-
-.unit-selector {
-  padding: 0.75rem 1rem;
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  border-left: none;
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  outline: none;
-  min-width: 60px;
-}
-
-.unit-selector:focus {
-  border-color: var(--buhler-primary);
-  box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1);
 }
 
 .input-wrapper.weight-input:focus-within {
   border-color: var(--buhler-primary);
   box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1);
-}
-
-.input-wrapper.weight-input:focus-within .unit-selector {
-  border-color: var(--buhler-primary);
 }
 
 /* Responsive Design */
@@ -249,14 +280,7 @@ defineExpose({
   
   .input-wrapper.weight-input .input-field {
     border-radius: 8px 8px 0 0;
-    border-right: 2px solid #e2e8f0;
     border-bottom: none;
-  }
-  
-  .unit-selector {
-    border-radius: 0 0 8px 8px;
-    border-left: 2px solid #e2e8f0;
-    border-top: none;
   }
 }
 </style>

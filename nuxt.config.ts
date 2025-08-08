@@ -7,11 +7,13 @@ export default defineNuxtConfig({
   },
   modules: [
     '@nuxt/eslint',
-    '@nuxtjs/google-fonts'
+    '@nuxtjs/google-fonts',
+    'nuxt-auth-utils'
   ],
   googleFonts: {
     families: {
       Inter: [300, 400, 500, 600, 700]
     }
-  }
+  },
+  // Nuxt Auth Utils Configuration - remove this as it might not be valid in Nuxt 4
 })

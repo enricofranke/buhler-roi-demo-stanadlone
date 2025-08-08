@@ -1,5 +1,8 @@
 <template>
   <div class="roi-calculator-page">
+    <!-- Authentication Header -->
+    <AuthHeader />
+    
     <div class="page-container">
       <RoiCalculator />
     </div>
@@ -7,6 +10,11 @@
 </template>
 
 <script setup>
+// This page is now protected by the global auth middleware
+definePageMeta({
+  // No middleware needed - global middleware handles auth
+})
+
 // Auto-import from app/components/
 </script>
 

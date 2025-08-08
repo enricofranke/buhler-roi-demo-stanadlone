@@ -4,19 +4,18 @@
     <div class="calculator-header">
       <div class="header-content">
         <h2 class="header-title">
-          <i class="pi pi-chart-line" aria-hidden="true"></i>
+          <i class="pi pi-chart-bar" aria-hidden="true"></i>
           Bühler BRAM Calculator
         </h2>
         <p class="header-subtitle">
           Calculate your potential return on investment with Bühler's service solutions
         </p>
       </div>
-      <div class="header-actions">
+      <div class="header-actions" v-if="currentStep === 3">
         <button 
-          v-if="currentStep === 3"
           @click="exportToPDF" 
           class="pdf-export-btn"
-          :disabled="isExporting"
+          :disabled="isExporting || !showResults"
         >
           <i class="pi pi-file-pdf" aria-hidden="true"></i>
           {{ isExporting ? 'Exporting...' : 'Export PDF' }}
@@ -51,17 +50,18 @@
     </div>
 
     <!-- Step Content -->
-    <div class="step-content">
+    <div class="step-content" :class="{ 'step-1': currentStep === 1 }">
       <!-- Step 1: Customer Information -->
       <div v-if="currentStep === 1" class="step-container">
-        <div class="step-header">
-          <h3 class="step-title">
-            <i class="pi pi-user" aria-hidden="true"></i>
-            Customer Information
-          </h3>
-          <p class="step-subtitle">Please provide your production and operational details</p>
-        </div>
-        
+        <div class="calculator-inputs">
+          <div class="step-header">
+            <h3 class="step-title">
+              <i class="pi pi-user" aria-hidden="true"></i>
+              Customer Information
+            </h3>
+            <p class="step-subtitle">Please provide your production and operational details</p>
+          </div>
+          
       <div class="input-grid">
         <!-- Production Parameters -->
         <div class="input-section">
@@ -88,7 +88,7 @@
                 </button>
               </div>
             </div>
-            <div class="input-wrapper">
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.machinesInOperation }">
               <input 
                 id="machines-in-operation"
                 v-model.number="inputs.machinesInOperation"
@@ -100,6 +100,9 @@
               />
               <span class="input-unit">units</span>
             </div>
+            <div v-if="showValidationErrorsStep1 && step1ErrorState.machinesInOperation" class="validation-hint">
+              {{ inputs.machinesInOperation == null ? 'This field is required.' : 'Please enter at least 1 machine.' }}
+            </div>
           </div>
 
           <div class="input-group">
@@ -107,7 +110,7 @@
               Production Days per Year
               <span class="input-hint">Number of production days annually</span>
             </label>
-            <div class="input-wrapper">
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.productionDaysPerYear }">
               <input 
                 id="production-days"
                 v-model.number="inputs.productionDaysPerYear"
@@ -119,6 +122,9 @@
               />
               <span class="input-unit">days</span>
             </div>
+            <div v-if="showValidationErrorsStep1 && step1ErrorState.productionDaysPerYear" class="validation-hint">
+              {{ inputs.productionDaysPerYear == null ? 'This field is required.' : 'Please enter a value between 1 and 365 days.' }}
+            </div>
           </div>
 
           <div class="input-group">
@@ -126,7 +132,7 @@
               Production Hours per Day
               <span class="input-hint">Average daily operating hours</span>
             </label>
-            <div class="input-wrapper">
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.productionHoursPerDay }">
               <input 
                 id="production-hours"
                 v-model.number="inputs.productionHoursPerDay"
@@ -135,12 +141,16 @@
                 min="1"
                 max="24"
                 step="0.5"
+                @input="clampProductionHours"
               />
               <span class="input-unit">hours</span>
             </div>
+            <div v-if="showValidationErrorsStep1 && step1ErrorState.productionHoursPerDay" class="validation-hint">
+              {{ inputs.productionHoursPerDay == null ? 'This field is required.' : 'Please enter a value between 1 and 24 hours.' }}
+            </div>
           </div>
 
-          <WeightInput
+           <WeightInput
             :model-value="inputs.dailyOutputKg"
             :label="dailyOutputLabel"
             :hint="dailyOutputHint + ' (e.g. 1000kg or 2200lb)'"
@@ -148,6 +158,11 @@
             @update:model-value="handleDailyOutputUpdate"
             @update:unit="handleDailyOutputUnitUpdate"
           />
+           <div v-if="showValidationErrorsStep1 && (step1ErrorState.dailyOutputKg || step1ErrorState.weightUnit)" class="validation-hint">
+             {{ inputs.dailyOutputKg == null
+                ? 'This field is required.'
+                : (!weightUnit || weightUnit === '' ? 'Please select a unit (kg or lb).' : 'Please enter a positive output.') }}
+           </div>
         </div>
 
         <!-- Downtime Impact -->
@@ -162,7 +177,7 @@
               Planned Maintenance Events per Machine/Year
               <span class="input-hint">Scheduled maintenance stops per machine annually</span>
             </label>
-            <div class="input-wrapper">
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.plannedMaintenanceEvents }">
               <input 
                 id="planned-events"
                 v-model.number="inputs.plannedMaintenanceEvents"
@@ -174,6 +189,9 @@
               />
               <span class="input-unit">events</span>
             </div>
+            <div v-if="showValidationErrorsStep1 && step1ErrorState.plannedMaintenanceEvents" class="validation-hint">
+              {{ inputs.plannedMaintenanceEvents == null ? 'This field is required.' : '' }}
+            </div>
           </div>
 
           <div class="input-group">
@@ -181,7 +199,7 @@
               Unplanned Maintenance Events per Machine/Year
               <span class="input-hint">Unexpected breakdowns per machine annually</span>
             </label>
-            <div class="input-wrapper">
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.unplannedMaintenanceEvents }">
               <input 
                 id="unplanned-events"
                 v-model.number="inputs.unplannedMaintenanceEvents"
@@ -193,6 +211,9 @@
               />
               <span class="input-unit">events</span>
             </div>
+            <div v-if="showValidationErrorsStep1 && step1ErrorState.unplannedMaintenanceEvents" class="validation-hint">
+              {{ inputs.unplannedMaintenanceEvents == null ? 'This field is required.' : '' }}
+            </div>
           </div>
 
           <div class="input-group">
@@ -200,7 +221,7 @@
               Planned Downtime Duration per Event
               <span class="input-hint">Average hours per planned maintenance</span>
             </label>
-            <div class="input-wrapper">
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.plannedDowntimeDurationPerEvent }">
               <input 
                 id="planned-duration"
                 v-model.number="inputs.plannedDowntimeDurationPerEvent"
@@ -212,6 +233,9 @@
               />
               <span class="input-unit">hours</span>
             </div>
+            <div v-if="showValidationErrorsStep1 && step1ErrorState.plannedDowntimeDurationPerEvent" class="validation-hint">
+              {{ inputs.plannedDowntimeDurationPerEvent == null ? 'This field is required.' : 'Please enter at least 0.5 hours.' }}
+            </div>
           </div>
 
           <div class="input-group">
@@ -219,7 +243,7 @@
               Unplanned Downtime Duration per Event
               <span class="input-hint">Average hours per unplanned breakdown</span>
             </label>
-            <div class="input-wrapper">
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.unplannedDowntimeDurationPerEvent }">
               <input 
                 id="unplanned-duration"
                 v-model.number="inputs.unplannedDowntimeDurationPerEvent"
@@ -231,19 +255,53 @@
               />
               <span class="input-unit">hours</span>
             </div>
+            <div v-if="showValidationErrorsStep1 && step1ErrorState.unplannedDowntimeDurationPerEvent" class="validation-hint">
+              {{ inputs.unplannedDowntimeDurationPerEvent == null ? 'This field is required.' : 'Please enter at least 0.5 hours.' }}
+            </div>
           </div>
 
           <CurrencyWeightInput
-            :model-value="inputs.productMarginPerKg"
-            :label="`Product Margin per ${weightUnitLabel}`"
-            :hint="`Profit margin per ${weightUnitLabel} of product`"
+            :model-value="inputs.salesPricePerKg"
+            :label="`Sales Price per ${weightUnitLabel}`"
+            :hint="`Selling price per ${weightUnitLabel} of product`"
             :unit="weightUnit"
             input-id="product-margin"
             @update:model-value="handleProductMarginUpdate"
           />
-            </div>
+          <div v-if="showValidationErrorsStep1 && step1ErrorState.salesPricePerKg" class="validation-hint">
+            {{ inputs.salesPricePerKg == null ? 'This field is required.' : 'Please enter a non-negative price.' }}
           </div>
+
+          <div class="input-group">
+            <label for="margin-percent" class="input-label">
+              Margin
+              <span class="input-hint">Percentage of sales price</span>
+            </label>
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.marginPercent }">
+              <input 
+                id="margin-percent"
+                v-model.number="inputs.marginPercent"
+                type="number" 
+                class="input-field"
+                min="0"
+                max="100"
+                step="0.1"
+              />
+              <span class="input-unit">%</span>
+          </div>
+            <div v-if="showValidationErrorsStep1 && step1ErrorState.marginPercent" class="validation-hint">
+              {{ inputs.marginPercent == null ? 'This field is required.' : 'Please enter a value between 0 and 100%.' }}
+            </div>
         </div>
+      </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- Live Results Preview - separate card -->
+      <div v-if="currentStep === 1" class="downtime-impact-wrapper">
+        <DowntimeImpact :calculations="liveCalculations" :weight-unit="weightUnit" />
+      </div>
 
       <!-- Step 2: Bühler Sales Information -->
       <div v-if="currentStep === 2" class="step-container">
@@ -267,7 +325,7 @@
                 Estimated Downtime Reduction with BRAM (in hours per event)
                 <span class="input-hint">Hours saved per downtime event with BRAM solution</span>
             </label>
-              <div class="input-wrapper">
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep2 && step2ErrorState.estimatedDowntimeReductionPerEvent }">
               <input 
                   id="downtime-reduction"
                   v-model.number="inputs.estimatedDowntimeReductionPerEvent"
@@ -279,6 +337,9 @@
               />
                 <span class="input-unit">hours</span>
             </div>
+          <div v-if="showValidationErrorsStep2 && step2ErrorState.estimatedDowntimeReductionPerEvent" class="validation-hint">
+            {{ inputs.estimatedDowntimeReductionPerEvent == null ? 'This field is required.' : 'Please enter a non-negative number of hours.' }}
+          </div>
           </div>
 
           <div class="input-group">
@@ -286,7 +347,7 @@
                 Service Contract Cost / Year
               <span class="input-hint">Annual service agreement cost</span>
             </label>
-            <div class="input-wrapper currency">
+            <div class="input-wrapper currency" :class="{ error: showValidationErrorsStep2 && step2ErrorState.serviceContractCost }">
               <span class="currency-symbol">$</span>
               <input 
                 id="service-cost"
@@ -299,6 +360,9 @@
               />
               <span class="input-unit">per year</span>
               </div>
+            <div v-if="showValidationErrorsStep2 && step2ErrorState.serviceContractCost" class="validation-hint">
+              {{ inputs.serviceContractCost == null ? 'This field is required.' : 'Please enter a non-negative cost.' }}
+            </div>
             </div>
           </div>
 
@@ -344,10 +408,10 @@
                 <span class="preview-value">{{ inputs.unplannedDowntimeDurationPerEvent || 0 }} hours</span>
               </div>
               <div class="preview-item">
-                <span class="preview-label">Product Margin</span>
-                <span class="preview-value">
-                  ${{ weightUnit === 'kg' ? (inputs.productMarginPerKg || 0).toFixed(2) : weightUnit === 'lb' ? ((inputs.productMarginPerKg || 0) / 2.20462).toFixed(4) : (inputs.productMarginPerKg || 0).toFixed(2) }}/{{ weightUnitLabel }}
-                </span>
+              <span class="preview-label">Sales Price / Margin</span>
+              <span class="preview-value">
+                ${{ (inputs.salesPricePerKg || 0).toFixed(2) }}/{{ weightUnitLabel }} · {{ (inputs.marginPercent || 0).toFixed(1) }}%
+              </span>
               </div>
             </div>
           </div>
@@ -620,11 +684,10 @@
       
       <div class="nav-spacer"></div>
       
-            <button 
+      <button 
         v-if="currentStep < 3"
         @click="nextStep"
         class="nav-btn nav-btn-primary"
-        :disabled="!canProceedToNextStep"
       >
         Next
         <i class="pi pi-arrow-right"></i>
@@ -639,6 +702,7 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import WeightInput from './WeightInput.vue'
 import CurrencyWeightInput from './CurrencyWeightInput.vue'
+import DowntimeImpact from './DowntimeImpact.vue'
 
 interface RoiInputs {
   machinesInOperation: number | null
@@ -649,7 +713,8 @@ interface RoiInputs {
   productionDaysPerYear: number | null
   productionHoursPerDay: number | null
   dailyOutputKg: number | null
-  productMarginPerKg: number | null
+  salesPricePerKg: number | null
+  marginPercent: number | null
   estimatedDowntimeReductionPerEvent: number | null
   serviceContractCost: number | null
 }
@@ -689,7 +754,8 @@ const inputs = ref<RoiInputs>({
   productionDaysPerYear: null,
   productionHoursPerDay: null,
   dailyOutputKg: null,
-  productMarginPerKg: null,
+  salesPricePerKg: null,
+  marginPercent: null,
   estimatedDowntimeReductionPerEvent: null,
   serviceContractCost: null
 })
@@ -721,9 +787,8 @@ const machinesTerminology = ref<'operation' | 'scope'>('scope')
 // Weight unit system
 const weightUnit = ref<'kg' | 'lb' | ''>('')
 
-// Conversion functions (for display purposes)
+// Conversion function (for display purposes)
 const kgToLb = (kg: number): number => Math.round(kg * 2.20462 * 10) / 10
-const lbToKg = (lb: number): number => Math.round(lb / 2.20462 * 10) / 10
 
 // Computed labels based on terminology toggle
 const machinesLabel = computed(() => 
@@ -750,11 +815,6 @@ const dailyOutputHint = computed(() =>
 
 // Weight unit labels
 const weightUnitLabel = computed(() => weightUnit.value || 'unit')
-const weightUnitLong = computed(() => {
-  if (weightUnit.value === 'kg') return 'kilograms'
-  if (weightUnit.value === 'lb') return 'pounds'
-  return 'units'
-})
 
 // Handlers for weight input components
 const handleDailyOutputUpdate = (value: number | null) => {
@@ -766,8 +826,67 @@ const handleDailyOutputUnitUpdate = (unit: 'kg' | 'lb' | '') => {
 }
 
 const handleProductMarginUpdate = (value: number | null) => {
-  inputs.value.productMarginPerKg = value
+  inputs.value.salesPricePerKg = value
 }
+
+// Ensure production hours stay within [1, 24]
+const clampProductionHours = (e: Event) => {
+  const target = e.target as HTMLInputElement | null
+  if (!target) return
+  let v = Number(target.value)
+  if (Number.isNaN(v)) v = 1
+  if (v < 1) v = 1
+  if (v > 24) v = 24
+  inputs.value.productionHoursPerDay = v
+}
+
+// Live calculations for preview
+const liveCalculations = computed(() => {
+  const input = inputs.value
+  const machinesInOperation = input.machinesInOperation || 0
+  const plannedMaintenanceEvents = input.plannedMaintenanceEvents || 0
+  const unplannedMaintenanceEvents = input.unplannedMaintenanceEvents || 0
+  const plannedDowntimeDurationPerEvent = input.plannedDowntimeDurationPerEvent || 0
+  const unplannedDowntimeDurationPerEvent = input.unplannedDowntimeDurationPerEvent || 0
+  const _productionDaysPerYear = input.productionDaysPerYear || 0
+  const productionHoursPerDay = input.productionHoursPerDay || 0
+  const dailyOutputKg = input.dailyOutputKg || 0
+  // Keep for backward compatibility if present (but derived value is used below)
+  // Derive product margin per kg from sales price and margin percent
+  const derivedMarginPerKg = (() => {
+    const sales = input.salesPricePerKg || 0
+    const marginPct = input.marginPercent || 0
+    return sales * (marginPct / 100)
+  })()
+
+  const hourlyProductionRate = productionHoursPerDay > 0 ? dailyOutputKg / productionHoursPerDay : 0
+  const annualPlannedDowntimeHours = plannedMaintenanceEvents * plannedDowntimeDurationPerEvent * machinesInOperation
+  const annualPlannedProductionLoss = annualPlannedDowntimeHours * hourlyProductionRate
+  const annualPlannedRevenueLoss = annualPlannedProductionLoss * derivedMarginPerKg
+  const annualUnplannedDowntimeHours = unplannedMaintenanceEvents * unplannedDowntimeDurationPerEvent * machinesInOperation
+  const annualUnplannedProductionLoss = annualUnplannedDowntimeHours * hourlyProductionRate
+  const annualUnplannedRevenueLoss = annualUnplannedProductionLoss * derivedMarginPerKg
+  const annualDowntimeHours = annualPlannedDowntimeHours + annualUnplannedDowntimeHours
+  const annualProductionLoss = annualPlannedProductionLoss + annualUnplannedProductionLoss
+  const annualRevenueLoss = annualPlannedRevenueLoss + annualUnplannedRevenueLoss
+  return {
+    annualPlannedDowntimeHours,
+    annualPlannedProductionLoss,
+    annualPlannedRevenueLoss,
+    annualUnplannedDowntimeHours,
+    annualUnplannedProductionLoss,
+    annualUnplannedRevenueLoss,
+    annualDowntimeHours,
+    annualProductionLoss,
+    annualRevenueLoss,
+    additionalUptimeHours: 0,
+    additionalOutput: 0,
+    potentialSavings: 0,
+    netSavings: 0,
+    roi: 0,
+    paybackMonths: 0
+  }
+})
 
 // Manual calculations (not computed - only updated when calculate button is clicked)
 const calculations = ref<RoiCalculations>({
@@ -805,10 +924,14 @@ const performCalculations = (): RoiCalculations => {
   const unplannedMaintenanceEvents = input.unplannedMaintenanceEvents || 0
   const plannedDowntimeDurationPerEvent = input.plannedDowntimeDurationPerEvent || 0
   const unplannedDowntimeDurationPerEvent = input.unplannedDowntimeDurationPerEvent || 0
-  const productionDaysPerYear = input.productionDaysPerYear || 0
+  const _productionDaysPerYear = input.productionDaysPerYear || 0
   const productionHoursPerDay = input.productionHoursPerDay || 0
   const dailyOutputKg = input.dailyOutputKg || 0
-  const productMarginPerKg = input.productMarginPerKg || 0
+  const derivedMarginPerKg = (() => {
+    const sales = input.salesPricePerKg || 0
+    const marginPct = input.marginPercent || 0
+    return sales * (marginPct / 100)
+  })()
   const estimatedDowntimeReductionPerEvent = input.estimatedDowntimeReductionPerEvent || 0
   const serviceContractCost = input.serviceContractCost || 0
   
@@ -818,10 +941,10 @@ const performCalculations = (): RoiCalculations => {
   const hourlyProductionRate = productionHoursPerDay > 0 ? dailyOutputKg / productionHoursPerDay : 0
   
   // Annual production capacity = Daily output × Production days per year
-  const annualProductionCapacity = dailyOutputKg * productionDaysPerYear
+  const _annualProductionCapacity = dailyOutputKg * _productionDaysPerYear
   
   // Total annual production hours = Production days × Production hours per day
-  const annualProductionHours = productionDaysPerYear * productionHoursPerDay
+  const _annualProductionHours = _productionDaysPerYear * productionHoursPerDay
   
   // PLANNED DOWNTIME CALCULATIONS
   // Planned downtime hours per year = Planned events × Duration × Machines
@@ -833,7 +956,7 @@ const performCalculations = (): RoiCalculations => {
   const annualPlannedProductionLoss = annualPlannedDowntimeHours * hourlyProductionRate
   
   // Planned revenue loss = Planned production loss × Product margin
-  const annualPlannedRevenueLoss = annualPlannedProductionLoss * productMarginPerKg
+  const annualPlannedRevenueLoss = annualPlannedProductionLoss * derivedMarginPerKg
   
   // UNPLANNED DOWNTIME CALCULATIONS
   // Unplanned downtime hours per year = Unplanned events × Duration × Machines
@@ -845,7 +968,7 @@ const performCalculations = (): RoiCalculations => {
   const annualUnplannedProductionLoss = annualUnplannedDowntimeHours * hourlyProductionRate
   
   // Unplanned revenue loss = Unplanned production loss × Product margin
-  const annualUnplannedRevenueLoss = annualUnplannedProductionLoss * productMarginPerKg
+  const annualUnplannedRevenueLoss = annualUnplannedProductionLoss * derivedMarginPerKg
   
   // COMBINED TOTALS
   const annualDowntimeHours = annualPlannedDowntimeHours + annualUnplannedDowntimeHours
@@ -864,7 +987,7 @@ const performCalculations = (): RoiCalculations => {
   const additionalOutput = additionalUptimeHours * hourlyProductionRate
   
   // C19: Additional Margin (USD/year) = Additional Output × Product Margin
-  const potentialSavings = additionalOutput * productMarginPerKg
+  const potentialSavings = additionalOutput * derivedMarginPerKg
   
   // === ROI CALCULATION ===
   // C23: Net savings per year = Additional Margin - Service Contract Cost
@@ -1098,27 +1221,58 @@ const getStepDescription = (step: number): string => {
 
 
 
+// Validation visibility flags per step
+const showValidationErrorsStep1 = ref(false)
+const showValidationErrorsStep2 = ref(false)
+
+// Validation state for Step 1 visual errors
+const step1ErrorState = computed(() => {
+  const v = inputs.value
+  return {
+    machinesInOperation: !(v.machinesInOperation != null && v.machinesInOperation >= 1),
+    productionDaysPerYear: !(v.productionDaysPerYear != null && v.productionDaysPerYear >= 1 && v.productionDaysPerYear <= 365),
+    productionHoursPerDay: !(v.productionHoursPerDay != null && v.productionHoursPerDay >= 1 && v.productionHoursPerDay <= 24),
+    dailyOutputKg: !(v.dailyOutputKg != null && v.dailyOutputKg > 0),
+    weightUnit: !(weightUnit.value === 'kg' || weightUnit.value === 'lb'),
+    plannedMaintenanceEvents: !(v.plannedMaintenanceEvents != null && v.plannedMaintenanceEvents >= 0),
+    unplannedMaintenanceEvents: !(v.unplannedMaintenanceEvents != null && v.unplannedMaintenanceEvents >= 0),
+    plannedDowntimeDurationPerEvent: !(v.plannedDowntimeDurationPerEvent != null && v.plannedDowntimeDurationPerEvent >= 0.5),
+    unplannedDowntimeDurationPerEvent: !(v.unplannedDowntimeDurationPerEvent != null && v.unplannedDowntimeDurationPerEvent >= 0.5),
+    salesPricePerKg: !(v.salesPricePerKg != null && v.salesPricePerKg >= 0),
+    marginPercent: !(v.marginPercent != null && v.marginPercent >= 0 && v.marginPercent <= 100)
+  }
+})
+
+// Validation state for Step 2 visual errors
+const step2ErrorState = computed(() => {
+  const v = inputs.value
+  return {
+    estimatedDowntimeReductionPerEvent:
+      !(v.estimatedDowntimeReductionPerEvent != null && v.estimatedDowntimeReductionPerEvent >= 0),
+    serviceContractCost: !(v.serviceContractCost != null && v.serviceContractCost >= 0)
+  }
+})
+
 // Check if a specific step is completed
 const isStepCompleted = (step: number): boolean => {
   if (step === 1) {
-    // Check if basic customer data is filled
-    return !!(
-      inputs.value.machinesInOperation &&
-      inputs.value.productionDaysPerYear &&
-      inputs.value.productionHoursPerDay &&
-      inputs.value.dailyOutputKg &&
-      inputs.value.plannedMaintenanceEvents &&
-      inputs.value.unplannedMaintenanceEvents &&
-      inputs.value.plannedDowntimeDurationPerEvent &&
-      inputs.value.unplannedDowntimeDurationPerEvent &&
-      inputs.value.productMarginPerKg
+    const e = step1ErrorState.value
+    return !(
+      e.machinesInOperation ||
+      e.productionDaysPerYear ||
+      e.productionHoursPerDay ||
+      e.dailyOutputKg ||
+      e.weightUnit ||
+      e.plannedMaintenanceEvents ||
+      e.unplannedMaintenanceEvents ||
+      e.plannedDowntimeDurationPerEvent ||
+      e.unplannedDowntimeDurationPerEvent ||
+      e.salesPricePerKg ||
+      e.marginPercent
     )
   } else if (step === 2) {
-    // Check if sales data is filled
-    return !!(
-      inputs.value.estimatedDowntimeReductionPerEvent &&
-      inputs.value.serviceContractCost
-    )
+    const e = step2ErrorState.value
+    return !(e.estimatedDowntimeReductionPerEvent || e.serviceContractCost)
   } else if (step === 3) {
     // Results step is completed when calculations are done
     return showResults.value
@@ -1155,6 +1309,17 @@ const nextStep = () => {
     if (currentStep.value === 3) {
       calculateResults()
     }
+  } else if (currentStep.value < 3 && !canProceedToNextStep.value) {
+    // Trigger visual validation on current step only
+    if (currentStep.value === 1) showValidationErrorsStep1.value = true
+    if (currentStep.value === 2) showValidationErrorsStep2.value = true
+    // Scroll to first error field
+    nextTick(() => {
+      const firstError = document.querySelector('.input-wrapper.error') as HTMLElement | null
+      if (firstError && typeof firstError.scrollIntoView === 'function') {
+        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    })
   }
 }
 
@@ -1274,10 +1439,10 @@ const exportToPDF = async () => {
     })
     
     // Bühler Corporate Colors
-    const buhlerGreen = [0, 155, 145]
-    const darkGray = [30, 41, 59]
-    const lightGray = [100, 116, 139]
-    const backgroundColor = [248, 250, 252]
+    const buhlerGreen: [number, number, number] = [0, 155, 145]
+    const darkGray: [number, number, number] = [30, 41, 59]
+    const lightGray: [number, number, number] = [100, 116, 139]
+    const backgroundColor: [number, number, number] = [248, 250, 252]
     
     const calc = calculations.value
     const input = inputs.value
@@ -1343,7 +1508,8 @@ const exportToPDF = async () => {
         ['Planned Downtime Duration per Event', (input.plannedDowntimeDurationPerEvent || 0).toString(), 'hours'],
         ['Unplanned Downtime Duration per Event', (input.unplannedDowntimeDurationPerEvent || 0).toString(), 'hours'],
         ['Estimated Downtime Reduction per Event', (input.estimatedDowntimeReductionPerEvent || 0).toString(), 'hours'],
-        [`Product Margin per ${weightUnitLabel.value}`, `$${weightUnit.value === 'kg' ? (input.productMarginPerKg || 0).toFixed(2) : weightUnit.value === 'lb' ? ((input.productMarginPerKg || 0) / 2.20462).toFixed(4) : (input.productMarginPerKg || 0).toFixed(2)}`, `per ${weightUnitLabel.value}`],
+        [`Sales Price per ${weightUnitLabel.value}`, `$${(input.salesPricePerKg || 0).toFixed(2)}`, `per ${weightUnitLabel.value}`],
+        ['Margin', `${(input.marginPercent || 0).toFixed(1)}%`, 'percent'],
         ['Service Contract Cost', formatCurrency(input.serviceContractCost || 0), 'per year']
       ],
       theme: 'grid',
@@ -1366,7 +1532,7 @@ const exportToPDF = async () => {
 
     
     // BRAM Benefits - keep on page 1
-    yPos = doc.lastAutoTable.finalY + 15
+    yPos = ((doc as unknown) as {lastAutoTable?: {finalY: number}}).lastAutoTable?.finalY ? ((doc as unknown) as {lastAutoTable?: {finalY: number}}).lastAutoTable!.finalY + 15 : yPos + 15
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(...buhlerGreen)
@@ -1383,7 +1549,7 @@ const exportToPDF = async () => {
       ],
       theme: 'grid',
       headStyles: {
-        fillColor: [34, 197, 94], // Green for positive impact
+        fillColor: [34, 197, 94] as [number, number, number], // Green for positive impact
         textColor: [255, 255, 255],
         fontSize: 11,
         fontStyle: 'bold'
@@ -1435,7 +1601,7 @@ const exportToPDF = async () => {
       ],
       theme: 'grid',
       headStyles: {
-        fillColor: [251, 146, 60], // Orange for downtime analysis
+        fillColor: [251, 146, 60] as [number, number, number], // Orange for downtime analysis
         textColor: [255, 255, 255],
         fontSize: 11,
         fontStyle: 'bold'
@@ -1451,7 +1617,7 @@ const exportToPDF = async () => {
     })
     
     // Total Combined Impact
-    yPos = doc.lastAutoTable.finalY + 8
+    yPos = ((doc as unknown) as {lastAutoTable?: {finalY: number}}).lastAutoTable?.finalY ? ((doc as unknown) as {lastAutoTable?: {finalY: number}}).lastAutoTable!.finalY + 8 : yPos + 8
     doc.setFontSize(12)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(...darkGray)
@@ -1468,7 +1634,7 @@ const exportToPDF = async () => {
       ],
       theme: 'grid',
       headStyles: {
-        fillColor: [239, 68, 68], // Red for total negative impact
+        fillColor: [239, 68, 68] as [number, number, number], // Red for total negative impact
         textColor: [255, 255, 255],
         fontSize: 11,
         fontStyle: 'bold'
@@ -1484,7 +1650,7 @@ const exportToPDF = async () => {
     })
     
     // Financial Analysis - now on page 2
-    yPos = doc.lastAutoTable.finalY + 12
+    yPos = ((doc as unknown) as {lastAutoTable?: {finalY: number}}).lastAutoTable?.finalY ? ((doc as unknown) as {lastAutoTable?: {finalY: number}}).lastAutoTable!.finalY + 12 : yPos + 12
     doc.setFontSize(16)
     doc.setFont('helvetica', 'bold')
     doc.setTextColor(...buhlerGreen)
@@ -1503,7 +1669,7 @@ const exportToPDF = async () => {
       ],
       theme: 'grid',
       headStyles: {
-        fillColor: buhlerGreen,
+        fillColor: buhlerGreen as [number, number, number],
         textColor: [255, 255, 255],
         fontSize: 11,
         fontStyle: 'bold'
@@ -1554,9 +1720,10 @@ const exportToPDF = async () => {
         const pdfChartWidth = 800  // Wider for PDF export
         const pdfChartHeight = 500 // Better height for A4 format
         
-        // Store original chart size
-        const originalWidth = chartRef.value.style.width
-        const originalHeight = chartRef.value.style.height
+        // Store original chart size (fallback to current bounding size if inline style missing)
+        const rect = chartRef.value.getBoundingClientRect()
+        const originalWidth = chartRef.value.style.width || `${rect.width}px`
+        const originalHeight = chartRef.value.style.height || `${rect.height}px`
         
         // Temporarily resize the chart container for PDF export
         chartRef.value.style.width = `${pdfChartWidth}px`
@@ -1598,10 +1765,11 @@ const exportToPDF = async () => {
       } catch (chartError) {
         console.warn('Could not export chart:', chartError)
         // Restore chart size in case of error
-        if (chartRef.value) {
-          chartRef.value.style.width = ''
-          chartRef.value.style.height = ''
-          if (chartInstance) chartInstance.resize()
+        if (chartRef.value && chartInstance) {
+          const rect2 = chartRef.value.getBoundingClientRect()
+          chartRef.value.style.width = `${rect2.width}px`
+          chartRef.value.style.height = `${rect2.height}px`
+          chartInstance.resize()
         }
         // Add placeholder text if chart export fails
         doc.setFontSize(12)
@@ -1619,7 +1787,7 @@ const exportToPDF = async () => {
     }
     
     // Footer
-    const pageCount = doc.internal.getNumberOfPages()
+    const pageCount = ((doc as unknown) as {internal: {getNumberOfPages: () => number}}).internal.getNumberOfPages()
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i)
       
@@ -1832,6 +2000,16 @@ const exportToPDF = async () => {
   margin-bottom: 2rem;
 }
 
+.step-content.step-1 {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+
+.downtime-impact-wrapper {
+  margin-top: 2rem;
+}
+
 .step-container {
   display: flex;
   flex-direction: column;
@@ -1841,7 +2019,7 @@ const exportToPDF = async () => {
 .step-header {
   text-align: center;
   padding-bottom: 1.5rem;
-  border-bottom: 2px solid #f1f5f9;
+  border-bottom: none;
 }
 
 .step-title {
@@ -2097,6 +2275,17 @@ const exportToPDF = async () => {
   box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1);
 }
 
+.input-wrapper.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.validation-hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #ef4444;
+}
+
 .input-field {
   flex: 1;
   padding: 0.75rem 1rem;
@@ -2180,6 +2369,10 @@ const exportToPDF = async () => {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .section-header {
