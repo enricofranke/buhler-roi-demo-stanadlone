@@ -10,7 +10,7 @@
         <div class="login-header">
           <div class="brand-logo">
             <div class="brand-icon">
-              <i class="fas fa-chart-bar"></i>
+              <i class="pi pi-chart-bar"></i>
             </div>
             <div class="brand-text">
               <h1 class="brand-title">Bühler</h1>
@@ -24,7 +24,7 @@
         <form @submit.prevent="login" class="login-form">
           <div class="input-group">
             <label for="username" class="input-label">
-              <i class="fas fa-user input-icon"></i>
+              <i class="pi pi-user input-icon"></i>
               Username
             </label>
             <div class="input-wrapper">
@@ -36,31 +36,42 @@
                 class="input-field"
                 placeholder="Enter your username"
                 :disabled="loading"
+                autocomplete="username"
               >
             </div>
           </div>
 
           <div class="input-group">
             <label for="password" class="input-label">
-              <i class="fas fa-lock input-icon"></i>
+              <i class="pi pi-lock input-icon"></i>
               Password
             </label>
-            <div class="input-wrapper">
+            <div class="input-wrapper with-toggle">
               <input
                 id="password"
                 v-model="credentials.password"
-                type="password"
+                :type="passwordFieldType"
                 required
                 class="input-field"
                 placeholder="Enter your password"
                 :disabled="loading"
+                autocomplete="current-password"
               >
+              <button
+                type="button"
+                class="toggle-visibility"
+                :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                @click="showPassword = !showPassword"
+                :disabled="loading"
+              >
+                <i :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'"></i>
+              </button>
             </div>
           </div>
 
           <!-- Error Message -->
           <div v-if="error" class="error-message">
-            <i class="fas fa-exclamation-triangle"></i>
+            <i class="pi pi-exclamation-triangle"></i>
             {{ error }}
           </div>
 
@@ -75,7 +86,7 @@
               Signing in...
             </span>
             <span v-else class="button-content">
-              <i class="fas fa-sign-in-alt"></i>
+              <i class="pi pi-sign-in"></i>
               Sign In
             </span>
           </button>
@@ -112,6 +123,10 @@ const credentials = ref({
 })
 const loading = ref(false)
 const error = ref('')
+
+// Password visibility
+const showPassword = ref(false)
+const passwordFieldType = computed(() => (showPassword.value ? 'text' : 'password'))
 
 // Use auth composable
 const { login: authLogin } = useAuth()
@@ -322,6 +337,10 @@ const login = async () => {
   border-radius: 10px;
 }
 
+.with-toggle .input-field {
+  padding-right: 2.75rem;
+}
+
 .input-field::placeholder {
   color: #94a3b8;
 }
@@ -390,6 +409,36 @@ const login = async () => {
 
 .button-content.loading {
   pointer-events: none;
+}
+
+/* Password visibility toggle */
+.toggle-visibility {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 8px;
+  width: 2rem;
+  height: 2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.toggle-visibility:hover:not(:disabled) {
+  color: var(--buhler-primary);
+  background: rgba(0, 155, 145, 0.08);
+}
+
+.toggle-visibility:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Spinner Animation */

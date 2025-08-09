@@ -44,7 +44,9 @@ steps:
       - '--max-instances'
       - '10'
       - '--set-env-vars'
-      - 'BASIC_AUTH_USER=buhler,BASIC_AUTH_PASSWORD=demo2025,NODE_ENV=production'
+      - 'BASIC_AUTH_USER=buhler,BASIC_AUTH_PASSWORD=demo2025,NODE_ENV=production,NITRO_TRUST_PROXY=1'
+      - '--set-secrets'
+      - 'NUXT_SESSION_PASSWORD=nuxt-session-password:latest'
 
 images:
   - 'gcr.io/$PROJECT_ID/buhler-roi-calculator:$COMMIT_SHA'
