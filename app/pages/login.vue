@@ -6,16 +6,23 @@
       
       <!-- Login Card -->
       <div class="login-card">
-        <!-- Header with Bühler Branding -->
+                <!-- Header with Bühler Branding -->
         <div class="login-header">
           <div class="brand-logo">
-            <NuxtImg
-              class="brand-logo-img"
-              src="/images/logo.svg"
-              alt="Bühler"
-              width="220"
-            />
-            <p class="brand-subtitle">BRAM Calculator</p>
+            <div class="logo-section">
+              <NuxtImg
+                class="brand-logo-img"
+                src="/images/logo.svg"
+                alt="Bühler"
+                width="180"
+                height="auto"
+              />
+            </div>
+            <div class="title-section">
+              <div class="logo-text">
+                <span class="logo-bram">BRAM</span><span class="logo-calculator">Calculator</span>
+              </div>
+            </div>
           </div>
           <p class="login-description">Admin Access Required</p>
         </div>
@@ -23,10 +30,6 @@
         <!-- Login Form -->
         <form @submit.prevent="login" class="login-form">
           <div class="input-group">
-            <label for="username" class="input-label">
-              <i class="pi pi-user input-icon"></i>
-              Username
-            </label>
             <div class="input-wrapper">
               <input
                 id="username"
@@ -34,7 +37,7 @@
                 type="text"
                 required
                 class="input-field"
-                placeholder="Enter your username"
+                placeholder="Username *"
                 :disabled="loading"
                 autocomplete="username"
                 inputmode="text"
@@ -46,10 +49,6 @@
           </div>
 
           <div class="input-group">
-            <label for="password" class="input-label">
-              <i class="pi pi-lock input-icon"></i>
-              Password
-            </label>
             <div class="input-wrapper with-toggle">
               <input
                 id="password"
@@ -57,7 +56,7 @@
                 :type="passwordFieldType"
                 required
                 class="input-field"
-                placeholder="Enter your password"
+                placeholder="Password *"
                 :disabled="loading"
                 autocomplete="current-password"
                 inputmode="text"
@@ -77,6 +76,16 @@
             </div>
           </div>
 
+          <!-- Remember me and Forgot password -->
+          <div class="form-options">
+            <label class="remember-checkbox">
+              <input type="checkbox" v-model="rememberMe" class="checkbox-input">
+              <span class="checkbox-custom"></span>
+              <span class="checkbox-label">Remember me</span>
+            </label>
+            <a href="#" class="forgot-link">Forgotten password?</a>
+          </div>
+
           <!-- Error Message -->
           <div v-if="error" class="error-message">
             <i class="pi pi-exclamation-triangle"></i>
@@ -94,10 +103,11 @@
               Signing in...
             </span>
             <span v-else class="button-content">
-              <i class="pi pi-sign-in"></i>
-              Sign In
+              Login
             </span>
           </button>
+
+
         </form>
 
         <!-- Demo credentials removed for production -->
@@ -135,6 +145,7 @@ const credentials = ref({
 })
 const loading = ref(false)
 const error = ref('')
+const rememberMe = ref(false)
 
 // Password visibility
 const showPassword = ref(false)
@@ -183,16 +194,22 @@ const login = async () => {
   align-items: center;
   justify-content: center;
   padding: 2rem;
-  background: linear-gradient(135deg, var(--buhler-primary-50) 0%, #f8fafc 50%, var(--buhler-primary-100) 100%);
+  background: 
+    radial-gradient(circle at 25% 25%, rgba(0, 155, 145, 0.12) 0%, transparent 70%),
+    radial-gradient(circle at 75% 75%, rgba(0, 155, 145, 0.08) 0%, transparent 70%),
+    radial-gradient(circle at 50% 10%, rgba(0, 155, 145, 0.06) 0%, transparent 60%),
+    linear-gradient(135deg, #ffffff 0%, #f0fdfc 30%, #ffffff 70%, #ecfdf5 100%);
   position: relative;
   overflow: hidden;
 }
+
+
 
 .login-wrapper {
   position: relative;
   z-index: 10;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
 }
 
 /* Background Pattern */
@@ -202,29 +219,35 @@ const login = async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  opacity: 0.03;
+  opacity: 0.02;
   background-image: 
-    radial-gradient(circle at 25% 25%, var(--buhler-primary) 2px, transparent 2px),
-    radial-gradient(circle at 75% 75%, var(--buhler-primary) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(0, 155, 145, 0.08) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(0, 155, 145, 0.08) 1px, transparent 1px);
   background-size: 60px 60px;
-  background-position: 0 0, 30px 30px;
   z-index: 1;
-  pointer-events: none; /* Wichtig: Verhindert dass das Pattern Klicks abfängt */
+  pointer-events: none;
 }
 
 /* Login Card */
 .login-card {
-  background: white;
-  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-radius: 24px;
   box-shadow: 
-    0 20px 25px -5px rgba(0, 155, 145, 0.1),
-    0 10px 10px -5px rgba(0, 155, 145, 0.04),
-    0 0 0 1px rgba(0, 155, 145, 0.05);
+    0 25px 50px -12px rgba(0, 155, 145, 0.12),
+    0 15px 25px -5px rgba(0, 155, 145, 0.08),
+    0 0 0 1px rgba(0, 155, 145, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   padding: 2.5rem;
   position: relative;
   z-index: 20;
   overflow: hidden;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  transform: translateY(0);
+  will-change: transform;
 }
+
+.login-card:hover {}
 
 .login-card::before {
   content: '';
@@ -234,55 +257,58 @@ const login = async () => {
   right: 0;
   height: 4px;
   background: linear-gradient(90deg, var(--buhler-primary), var(--buhler-primary-300));
+  border-radius: 24px 24px 0 0;
 }
 
 /* Header Section */
 .login-header {
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
 }
 
 .brand-logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  gap: 0.4rem; /* balanced space between logo and text */
 }
 
-.brand-icon {
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(135deg, var(--buhler-primary), var(--buhler-primary-600));
-  border-radius: 16px;
+.logo-section {
   display: flex;
-  align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 16px rgba(0, 155, 145, 0.2);
 }
 
-.brand-icon i {
-  font-size: 1.75rem;
-  color: white;
-}
-
-.brand-text {
-  text-align: left;
-}
-
-.brand-title {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0;
+.brand-logo-img {
+  flex-shrink: 0;
+  filter: drop-shadow(0 4px 8px rgba(0, 155, 145, 0.15));
+  display: block; /* remove inline image baseline gap */
   line-height: 1;
 }
 
-.brand-subtitle {
-  font-size: 1rem;
+.title-section {
+  display: flex;
+  justify-content: center;
+}
+
+.logo-text {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.logo-bram {
   color: var(--buhler-primary);
-  margin: 0.25rem 0 0 0;
-  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.logo-calculator {
+  color: #1e293b;
+  letter-spacing: -0.01em;
 }
 
 .login-description {
@@ -296,57 +322,130 @@ const login = async () => {
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0;
 }
 
-.input-label {
+/* Form Options */
+.form-options {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  color: #334155;
-  font-size: 0.875rem;
+  justify-content: space-between;
+  margin: 0.75rem 0 0.25rem 0;
 }
 
-.input-icon {
+.remember-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-input {
+  display: none;
+}
+
+.checkbox-custom {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+  position: relative;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.checkbox-input:checked + .checkbox-custom {
+  background: var(--buhler-primary);
+  border-color: var(--buhler-primary);
+}
+
+.checkbox-input:checked + .checkbox-custom::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.checkbox-label {
+  color: #475569;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.forgot-link {
   color: var(--buhler-primary);
-  font-size: 0.875rem;
-  width: 16px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.forgot-link:hover {
+  color: var(--buhler-primary-600);
+  text-decoration: underline;
 }
 
 .input-wrapper {
   position: relative;
-  background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  background: rgba(248, 250, 252, 0.8);
+  border: 2px solid transparent;
+  border-radius: 16px;
+  transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
 }
 
-.input-wrapper:hover {
-  border-color: #cbd5e1;
+.input-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: linear-gradient(135deg, #e2e8f0, #f1f5f9);
+  border-radius: 16px;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask-composite: xor;
+  transition: background 0.3s ease;
+  pointer-events: none; /* ensure overlay does not block input interactions */
 }
+
+.input-wrapper:hover::before {}
+
+.input-wrapper:hover {}
 
 .input-wrapper:focus-within {
-  border-color: var(--buhler-primary);
-  box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1);
   background: white;
+}
+
+.input-wrapper:focus-within::before {
+  background: linear-gradient(135deg, var(--buhler-primary), var(--buhler-primary-400));
 }
 
 .input-field {
   width: 100%;
-  padding: 0.875rem 1rem;
+  padding: 1rem 1.25rem;
   border: none;
   background: transparent;
-  font-size: 0.95rem;
+  font-size: 1rem;
   color: #1e293b;
   outline: none;
-  border-radius: 10px;
+  border-radius: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
 .with-toggle .input-field {
@@ -385,23 +484,47 @@ const login = async () => {
   background: linear-gradient(135deg, var(--buhler-primary), var(--buhler-primary-600));
   color: white;
   border: none;
-  padding: 1rem;
-  border-radius: 12px;
-  font-size: 1rem;
+  padding: 1.25rem 2rem;
+  border-radius: 16px;
+  font-size: 1.05rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  min-height: 3rem; /* Minimum 48px touch target */
-  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
-  touch-action: manipulation; /* Optimizes for touch */
+  min-height: 3.5rem;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 155, 145, 0.2),
+    0 4px 6px -2px rgba(0, 155, 145, 0.1);
+  will-change: transform;
+}
+
+.login-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
 }
 
 .login-button:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--buhler-primary-600), var(--buhler-primary-700));
-  transform: translateY(-1px);
-  box-shadow: 0 8px 16px rgba(0, 155, 145, 0.25);
+  transform: translateY(-3px);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 155, 145, 0.3),
+    0 10px 10px -5px rgba(0, 155, 145, 0.2);
+}
+
+.login-button:hover:not(:disabled)::before {
+  transform: translateX(100%);
 }
 
 .login-button:active {
@@ -426,31 +549,35 @@ const login = async () => {
   pointer-events: none;
 }
 
+
+
 /* Password visibility toggle */
 .toggle-visibility {
   position: absolute;
-  right: 0.5rem;
+  right: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
   border: none;
-  background: transparent;
+  background: rgba(0, 155, 145, 0.05);
   color: #64748b;
   cursor: pointer;
-  padding: 0.5rem; /* Increased for better touch target */
-  border-radius: 8px;
-  min-width: 2.75rem; /* Minimum 44px touch target */
+  padding: 0.6rem;
+  border-radius: 12px;
+  min-width: 2.75rem;
   min-height: 2.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
-  transition: all 0.2s ease;
-  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(10px);
 }
 
 .toggle-visibility:hover:not(:disabled) {
   color: var(--buhler-primary);
-  background: rgba(0, 155, 145, 0.08);
+  background: rgba(0, 155, 145, 0.15);
+  transform: translateY(-50%) scale(1.05);
 }
 
 .toggle-visibility:disabled {
@@ -540,6 +667,18 @@ const login = async () => {
   .login-card {
     padding: 2rem;
   }
+  
+  .brand-logo {
+    gap: 0.5rem;
+  }
+  
+  .brand-logo-img {
+    width: 150px;
+  }
+  
+  .logo-text {
+    font-size: 1.75rem;
+  }
 }
 
 /* Mobile phones */
@@ -558,21 +697,15 @@ const login = async () => {
   }
 
   .brand-logo {
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
   }
 
-  .brand-text {
-    text-align: center;
+  .brand-logo-img {
+    width: 140px;
   }
 
-  .brand-title {
-    font-size: 1.75rem;
-  }
-
-  .brand-subtitle {
-    font-size: 0.9rem;
+  .logo-text {
+    font-size: 1.6rem;
   }
 
   .login-header {
@@ -613,8 +746,12 @@ const login = async () => {
     font-size: 1.5rem;
   }
 
-  .brand-title {
-    font-size: 1.5rem;
+  .brand-logo-img {
+    width: 130px;
+  }
+
+  .logo-text {
+    font-size: 1.4rem;
   }
 }
 
@@ -646,6 +783,19 @@ const login = async () => {
   .toggle-visibility:active:not(:disabled) {
     background: rgba(0, 155, 145, 0.15);
     transform: translateY(-50%) scale(0.95);
+  }
+
+  /* Reduce heavy effects on mobile */
+  .login-card,
+  .input-wrapper {
+    backdrop-filter: none;
+  }
+
+  .login-card:hover,
+  .input-wrapper:hover,
+  .input-wrapper:focus-within {
+    transform: none;
+    box-shadow: none;
   }
 }
 
@@ -683,9 +833,19 @@ const login = async () => {
   }
 }
 
-/* Smooth Transitions */
-* {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .login-card,
+  .login-button,
+  .input-wrapper,
+  .input-field,
+  .toggle-visibility {
+    transition: none !important;
+  }
+
+  .spinner {
+    animation: none !important;
+  }
 }
 
 /* Safe area support for devices with notches */

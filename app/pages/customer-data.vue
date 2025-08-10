@@ -4,13 +4,26 @@
       <!-- Header Section -->
       <div class="page-header">
       <div class="header-content">
-        <h1 class="page-title">
-          <i class="pi pi-chart-bar" aria-hidden="true"></i>
-          Bühler BRAM Calculator
-        </h1>
-        <p class="page-subtitle">
-          Enter your data to calculate your potential return on investment
-        </p>
+        <div class="brand-section">
+          <NuxtImg
+            class="brand-logo-img"
+            src="/images/logo.svg"
+            alt="Bühler"
+            width="120"
+            height="auto"
+          />
+        </div>
+        <div class="title-section">
+          <h1 class="page-title">
+            <i class="pi pi-chart-bar" aria-hidden="true"></i>
+            <span class="title-text">
+              <span class="title-bram">BRAM</span><span class="title-calculator">Calculator</span>
+            </span>
+          </h1>
+          <p class="page-subtitle">
+            Enter your data to calculate your potential return on investment
+          </p>
+        </div>
       </div>
     </div>
 
@@ -65,7 +78,7 @@
       <div class="export-container">
         <div class="export-info">
           <h3 class="export-title">Ready to Export</h3>
-          <p class="export-description">Generate a professional PDF summary for your sales team</p>
+          <p class="export-description">Generate a professional PDF summary for our sales team</p>
         </div>
         <button 
           @click="exportToPDF" 
@@ -389,7 +402,7 @@ const formatNumber = (value) => {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 1.5rem;
 }
 
 /* Header */
@@ -398,9 +411,26 @@ const formatNumber = (value) => {
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 1.5rem;
+}
+
+.brand-section {
+  flex-shrink: 0;
+}
+
+.brand-logo-img {
+  filter: drop-shadow(0 4px 8px rgba(0, 155, 145, 0.15));
+  display: block;
+  line-height: 1;
+}
+
+.title-section {
+  flex: 1;
 }
 
 /* Company Section */
@@ -470,6 +500,22 @@ const formatNumber = (value) => {
   color: var(--buhler-primary);
 }
 
+.title-text {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.title-bram {
+  color: var(--buhler-primary);
+  letter-spacing: -0.02em;
+}
+
+.title-calculator {
+  color: #1e293b;
+  letter-spacing: -0.01em;
+}
+
 .page-subtitle {
   color: #64748b;
   font-size: 1.1rem;
@@ -529,8 +575,8 @@ const formatNumber = (value) => {
 .input-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 3rem;
-  margin-bottom: 2rem;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .input-group {
@@ -678,7 +724,7 @@ const formatNumber = (value) => {
 
 /* Enhanced Export Action Bar */
 .export-action-bar {
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 .export-container {
@@ -686,14 +732,14 @@ const formatNumber = (value) => {
   backdrop-filter: saturate(180%) blur(12px);
   border: 1px solid #e2e8f0;
   border-radius: 20px;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem;
   box-shadow: 
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .export-info {
@@ -768,7 +814,7 @@ const formatNumber = (value) => {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 1rem 1.25rem;
+  padding: 1rem 1.5rem;
   flex: 1;
 }
 
@@ -869,9 +915,9 @@ const formatNumber = (value) => {
 @media (max-width: 768px) {
   .export-container {
     flex-direction: column;
-    gap: 1rem;
+    gap: 1.5rem;
     text-align: center;
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
   
   .export-btn-enhanced {
@@ -880,7 +926,7 @@ const formatNumber = (value) => {
   }
   
   .btn-content {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
   
   /* Disable hover effects on touch devices */
@@ -921,7 +967,7 @@ const formatNumber = (value) => {
   }
   
   .btn-content {
-    padding: 1.125rem 1rem;
+    padding: 1.5rem 1rem;
   }
   
   .btn-icon {
@@ -957,14 +1003,21 @@ const formatNumber = (value) => {
   }
   
   .customer-data-page {
-    gap: 1rem;
+    gap: 1.5rem;
   }
   
   .page-header {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
     padding: 1.5rem;
+  }
+  
+  .header-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+  }
+  
+  .brand-logo-img {
+    width: 100px;
   }
   
   .page-title {
@@ -982,12 +1035,12 @@ const formatNumber = (value) => {
   
   .section-title {
     font-size: 1.25rem;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
   }
   
   .input-grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
   }
 }
 
@@ -998,7 +1051,7 @@ const formatNumber = (value) => {
   }
   
   .customer-data-page {
-    gap: 0.75rem;
+    gap: 1rem;
   }
   
   .page-header,
@@ -1006,6 +1059,10 @@ const formatNumber = (value) => {
   .input-section {
     padding: 1rem;
     border-radius: 12px;
+  }
+  
+  .brand-logo-img {
+    width: 90px;
   }
   
   .page-title {
@@ -1024,11 +1081,11 @@ const formatNumber = (value) => {
     flex-direction: column;
     gap: 0.5rem;
     text-align: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
   }
   
   .input-grid {
-    gap: 1.5rem;
+    gap: 1rem;
   }
 }
 

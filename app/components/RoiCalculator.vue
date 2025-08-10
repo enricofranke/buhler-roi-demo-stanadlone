@@ -1,30 +1,6 @@
 <template>
   <div class="roi-calculator" ref="rootRef">
-    <!-- Header Section -->
-    <div class="calculator-header">
-      <div class="header-content">
-        <h2 class="header-title">
-          <i class="pi pi-chart-bar" aria-hidden="true"></i>
-          <span class="title-text">
-            <span class="title-brand">Bühler BRAM</span>
-            <span class="title-product">Calculator</span>
-          </span>
-        </h2>
-        <p class="header-subtitle">
-          Calculate your potential return on investment with Bühler's service solutions
-        </p>
-      </div>
-      <div class="header-actions" v-if="currentStep === 3">
-        <button 
-          @click="exportToPDF" 
-          class="pdf-export-btn"
-          :disabled="isExporting || !showResults"
-        >
-          <i class="pi pi-file-pdf" aria-hidden="true"></i>
-          {{ isExporting ? 'Exporting...' : 'Export PDF' }}
-        </button>
-      </div>
-    </div>
+
 
     <!-- Step Progress -->
     <div class="step-progress">
@@ -1882,11 +1858,28 @@ const exportToPDF = async () => {
   align-items: flex-start;
   padding: 2rem;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-.header-content {
+.header-main-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.brand-section {
+  flex-shrink: 0;
+}
+
+.brand-logo-img {
+  filter: drop-shadow(0 4px 8px rgba(0, 155, 145, 0.15));
+  display: block;
+  line-height: 1;
+}
+
+.title-section {
   flex: 1;
 }
 

@@ -3,8 +3,20 @@
     <div class="header-container">
       <!-- Bühler Logo/Brand -->
       <div class="brand">
-        <h1 class="brand-title">Bühler</h1>
-        <span class="brand-subtitle">ROI Calculator</span>
+        <div class="brand-logo">
+          <NuxtImg
+            class="brand-logo-img"
+            src="/images/logo.svg"
+            alt="Bühler"
+            width="100"
+            height="auto"
+          />
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">
+            <span class="title-bram">BRAM</span><span class="title-calculator">Calculator</span>
+          </div>
+        </div>
       </div>
 
       <!-- User Info & Logout -->
@@ -56,9 +68,10 @@ const logout = async () => {
 <style scoped>
 .auth-header {
   background: white;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e2e8f0;
   padding: 1rem 0;
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .header-container {
@@ -72,21 +85,43 @@ const logout = async () => {
 
 .brand {
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand-logo {
+  flex-shrink: 0;
+}
+
+.brand-logo-img {
+  filter: drop-shadow(0 2px 4px rgba(0, 155, 145, 0.1));
+  display: block;
+  line-height: 1;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
 }
 
 .brand-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #059669;
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 600;
   margin: 0;
+  line-height: 1.2;
 }
 
-.brand-subtitle {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-weight: 500;
+.title-bram {
+  color: var(--buhler-primary);
+  letter-spacing: -0.02em;
+}
+
+.title-calculator {
+  color: #1e293b;
+  letter-spacing: -0.01em;
 }
 
 .user-section {
@@ -132,28 +167,28 @@ const logout = async () => {
 @media (max-width: 768px) {
   .auth-header {
     padding: 0.75rem 0;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
   }
   
   .header-container {
     padding: 0 1rem;
     flex-direction: row;
     justify-content: space-between;
-    gap: 0.5rem;
+    gap: 0.75rem;
   }
   
   .brand {
     flex-direction: row;
-    align-items: baseline;
-    gap: 0.375rem;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .brand-logo-img {
+    width: 80px;
   }
   
   .brand-title {
-    font-size: 1.25rem;
-  }
-  
-  .brand-subtitle {
-    font-size: 0.75rem;
+    font-size: 1.125rem;
   }
   
   .user-info {
@@ -177,6 +212,18 @@ const logout = async () => {
 @media (max-width: 480px) {
   .auth-header {
     padding: 0.5rem 0;
+  }
+  
+  .header-container {
+    padding: 0 0.75rem;
+  }
+  
+  .brand-logo-img {
+    width: 70px;
+  }
+  
+  .brand-title {
+    font-size: 1rem;
     margin-bottom: 0.5rem;
   }
   
