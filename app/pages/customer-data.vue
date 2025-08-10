@@ -445,6 +445,9 @@ const formatNumber = (value) => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .company-label {
@@ -470,9 +473,11 @@ const formatNumber = (value) => {
   font-size: 0.95rem;
   transition: all 0.2s ease;
   width: 100%;
+  max-width: 100%;
   min-height: 3rem; /* Minimum 48px touch target */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  box-sizing: border-box;
 }
 
 .company-input:hover {
@@ -577,12 +582,18 @@ const formatNumber = (value) => {
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
   margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .input-group {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .group-title {
@@ -627,9 +638,11 @@ const formatNumber = (value) => {
   font-size: 0.95rem;
   transition: all 0.2s ease;
   width: 100%;
+  max-width: 100%;
   min-height: 3rem; /* Minimum 48px touch target */
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
+  box-sizing: border-box;
 }
 
 .field-input:hover {
@@ -1041,6 +1054,8 @@ const formatNumber = (value) => {
   .input-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -1085,7 +1100,10 @@ const formatNumber = (value) => {
   }
   
   .input-grid {
+    grid-template-columns: 1fr;
     gap: 1rem;
+    width: 100%;
+    max-width: 100%;
   }
 }
 
@@ -1098,15 +1116,231 @@ const formatNumber = (value) => {
   .page-header,
   .company-section,
   .input-section {
-    padding: 1rem;
+    padding: 0.75rem;
   }
   
   .page-title {
     font-size: 1.25rem;
   }
   
+  .title-text {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    line-height: 1;
+  }
+  
+  .title-bram {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+  
+  .title-calculator {
+    font-size: 1rem;
+    line-height: 1;
+    opacity: 0.8;
+  }
+  
   .export-container {
-    padding: 1rem;
+    padding: 0.75rem;
+  }
+}
+
+/* Extra small screens - optimize for 320px and below */
+@media (max-width: 320px) {
+  .customer-data-page-wrapper {
+    padding: 0.25rem;
+  }
+  
+  .customer-data-page {
+    gap: 0.75rem;
+  }
+  
+  .page-header,
+  .company-section,
+  .input-section {
+    padding: 0.5rem;
+    border-radius: 8px;
+  }
+  
+  .header-content {
+    gap: 1rem;
+  }
+  
+  .brand-logo-img {
+    width: 80px;
+  }
+  
+  .page-title {
+    font-size: 1.125rem;
+    gap: 0.75rem;
+  }
+  
+  .title-text {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+  }
+  
+  .title-bram {
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 0.9;
+  }
+  
+  .title-calculator {
+    font-size: 0.875rem;
+    opacity: 0.7;
+    font-weight: 600;
+    line-height: 0.9;
+  }
+  
+  .page-subtitle {
+    font-size: 0.85rem;
+  }
+  
+  .section-title {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  
+  .company-input,
+  .field-input {
+    padding: 0.625rem 0.75rem;
+    font-size: 0.9rem;
+  }
+  
+  .export-container {
+    padding: 0.5rem;
+    gap: 1rem;
+  }
+  
+  .export-title {
+    font-size: 1rem;
+  }
+  
+  .export-description {
+    font-size: 0.75rem;
+  }
+}
+
+/* Ultra small devices - under 300px */
+@media (max-width: 300px) {
+  .customer-data-page-wrapper {
+    padding: 0.25rem;
+    gap: 0.5rem;
+  }
+  
+  .customer-data-page {
+    gap: 0.5rem;
+  }
+  
+  .page-header,
+  .company-section,
+  .input-section {
+    padding: 0.375rem;
+    border-radius: 6px;
+  }
+  
+  .header-content {
+    gap: 0.75rem;
+  }
+  
+  .brand-logo-img {
+    width: 70px;
+  }
+  
+  .page-title {
+    font-size: 1rem;
+    gap: 0.5rem;
+  }
+  
+  .title-text {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+  }
+  
+  .title-bram {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 0.9;
+  }
+  
+  .title-calculator {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    font-weight: 600;
+    line-height: 0.9;
+  }
+  
+  .page-subtitle {
+    font-size: 0.75rem;
+    margin-top: 0.375rem;
+  }
+  
+  .section-title {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    gap: 0.375rem;
+  }
+  
+  .company-input,
+  .field-input {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.85rem;
+    min-height: 2.5rem;
+  }
+  
+  .company-label,
+  .field-label {
+    font-size: 0.8rem;
+  }
+  
+  .company-hint,
+  .field-hint {
+    font-size: 0.65rem;
+  }
+  
+  .export-container {
+    padding: 0.375rem;
+    gap: 0.75rem;
+    border-radius: 12px;
+  }
+  
+  .export-title {
+    font-size: 0.9rem;
+  }
+  
+  .export-description {
+    font-size: 0.7rem;
+  }
+  
+  .export-btn-enhanced {
+    min-width: 100%;
+    min-height: 3.5rem;
+  }
+  
+  .btn-content {
+    padding: 1rem 0.75rem;
+  }
+  
+  .btn-icon {
+    min-width: 2rem;
+    min-height: 2rem;
+    padding: 0.5rem;
+  }
+  
+  .btn-label {
+    font-size: 0.85rem;
+  }
+  
+  .btn-subtitle {
+    font-size: 0.65rem;
+  }
+  
+  .btn-arrow {
+    padding: 0.75rem;
   }
 }
 

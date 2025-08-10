@@ -224,24 +224,104 @@ const logout = async () => {
   
   .brand-title {
     font-size: 1rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .header-container {
-    padding: 0 0.75rem;
-  }
-  
-  .brand-title {
-    font-size: 1.125rem;
-  }
-  
-  .brand-subtitle {
-    font-size: 0.7rem;
   }
   
   .logout-btn {
     padding: 0.5rem 0.75rem;
     font-size: 0.7rem;
+  }
+}
+
+/* Very small devices - compact BRAM/Calculator layout */
+@media (max-width: 360px) {
+  .auth-header {
+    padding: 0.375rem 0;
+  }
+  
+  .header-container {
+    padding: 0 0.5rem;
+  }
+  
+  .brand {
+    gap: 0.5rem;
+  }
+  
+  .brand-logo-img {
+    width: 60px;
+  }
+  
+  .brand-title {
+    font-size: 0.9rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.125rem;
+    line-height: 1;
+  }
+  
+  .title-bram {
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+  
+  .title-calculator {
+    font-size: 0.75rem;
+    line-height: 1;
+    opacity: 0.8;
+  }
+  
+  .welcome-text {
+    display: none;
+  }
+  
+  .logout-btn {
+    padding: 0.375rem 0.5rem;
+    font-size: 0.65rem;
+    min-height: 40px;
+  }
+}
+
+/* Ultra small devices - minimal layout */
+@media (max-width: 300px) {
+  .auth-header {
+    padding: 0.25rem 0;
+  }
+  
+  .header-container {
+    padding: 0 0.375rem;
+    gap: 0.5rem;
+  }
+  
+  .brand {
+    gap: 0.375rem;
+  }
+  
+  .brand-logo-img {
+    width: 50px;
+  }
+  
+  .brand-title {
+    font-size: 0.8rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+  }
+  
+  .title-bram {
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  
+  .title-calculator {
+    font-size: 0.65rem;
+    opacity: 0.7;
+    font-weight: 500;
+  }
+  
+  .logout-btn {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.6rem;
+    min-height: 36px;
+    border-radius: 6px;
   }
 }
 </style>

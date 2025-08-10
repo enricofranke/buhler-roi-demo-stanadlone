@@ -2319,12 +2319,19 @@ const exportToPDF = async () => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 3rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .input-section {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .section-title {
@@ -2348,6 +2355,9 @@ const exportToPDF = async () => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .input-label {
@@ -2373,6 +2383,9 @@ const exportToPDF = async () => {
   border: 2px solid #e2e8f0;
   border-radius: 8px;
   transition: all 0.2s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .input-wrapper:hover {
@@ -2753,6 +2766,11 @@ const exportToPDF = async () => {
   .step-description {
     font-size: 0.7rem;
   }
+  
+  .input-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -2771,6 +2789,13 @@ const exportToPDF = async () => {
   .header-actions {
     flex-direction: column;
     align-self: stretch;
+  }
+  
+  .input-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
   }
   
   .header-title {
@@ -2924,49 +2949,52 @@ const exportToPDF = async () => {
   }
 }
 
+/* Ultra-small devices (320px - 480px) */
 @media (max-width: 480px) {
   .roi-calculator {
-    padding: 0.75rem;
+    padding: 0.5rem;
+    gap: 0.75rem;
   }
   
   .calculator-header,
   .step-progress,
   .step-content,
   .step-navigation {
-    padding: 1rem;
+    padding: 0.75rem;
+    border-radius: 8px;
   }
   
   .calculator-header {
-    padding: 1rem;
     text-align: center;
+    gap: 0.75rem;
   }
   
   .header-title {
-    font-size: 1.375rem;
+    font-size: 1.25rem;
     line-height: 1.1;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.125rem;
     text-align: center;
     justify-content: center;
   }
   
   .title-brand {
-    font-size: 1.375rem;
+    font-size: 1.25rem;
     line-height: 0.95;
   }
   
   .title-product {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     line-height: 0.95;
-    margin-top: -0.1rem;
+    margin-top: -0.05rem;
   }
   
   .header-subtitle {
-    font-size: 0.8rem;
-    line-height: 1.25;
+    font-size: 0.75rem;
+    line-height: 1.2;
     max-width: 100%;
-    margin: 0.5rem auto 0;
-    padding: 0 0.25rem;
+    margin: 0.375rem auto 0;
+    padding: 0 0.125rem;
     text-align: center;
   }
   
@@ -2995,47 +3023,52 @@ const exportToPDF = async () => {
   }
   
   .step-progress {
-    padding: 0.75rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
   }
   
   .steps-header {
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.375rem;
+    flex-direction: column;
+    gap: 0.375rem;
+    text-align: center;
   }
   
   .steps-title {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    justify-content: center;
   }
   
   .steps-counter {
-    padding: 0.2rem 0.4rem;
-    font-size: 0.65rem;
+    padding: 0.125rem 0.375rem;
+    font-size: 0.6rem;
+    align-self: center;
   }
   
   .progress-container {
-    gap: 0.25rem;
-    padding: 0.75rem 0;
-    justify-content: space-around;
+    gap: 0.125rem;
+    padding: 0.5rem 0;
+    justify-content: space-between;
+    align-items: center;
   }
-  
-  /* No progress lines on small screens for cleaner mobile UX */
   
   .progress-step {
     flex: 1;
-    max-width: 90px;
-    padding: 0.25rem;
-    border-radius: 8px;
+    max-width: 80px;
+    padding: 0.125rem;
+    border-radius: 6px;
     transition: all 0.2s ease;
     /* Touch feedback */
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
   }
   
-  /* Enhanced active step highlighting */
+  /* Enhanced active step highlighting for mobile */
   .progress-step.active {
-    background: rgba(0, 155, 145, 0.08);
-    border: 2px solid rgba(0, 155, 145, 0.3);
-    box-shadow: 0 2px 8px rgba(0, 155, 145, 0.15);
+    background: rgba(0, 155, 145, 0.1);
+    border: 1px solid rgba(0, 155, 145, 0.4);
+    box-shadow: 0 1px 4px rgba(0, 155, 145, 0.2);
   }
   
   /* Touch feedback for clickable steps */
@@ -3045,49 +3078,97 @@ const exportToPDF = async () => {
   }
   
   .step-circle {
-    width: 44px;
-    height: 44px;
-    font-size: 0.95rem;
+    width: 36px;
+    height: 36px;
+    font-size: 0.8rem;
     border-width: 2px;
     /* Adequate touch target */
-    min-height: 44px;
-    min-width: 44px;
+    min-height: 36px;
+    min-width: 36px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
   
   .step-info {
-    max-width: 90px;
-    margin-top: 0.5rem;
+    max-width: 80px;
+    margin-top: 0.375rem;
+    gap: 0.125rem;
   }
   
   .step-label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 700;
+    line-height: 1;
   }
   
   .step-description {
-    font-size: 0.55rem;
+    font-size: 0.5rem;
     line-height: 1.1;
+    opacity: 0.8;
   }
   
   .input-section {
-    gap: 1rem;
+    gap: 0.75rem;
   }
   
   .section-title {
-    font-size: 1.125rem;
+    font-size: 1rem;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+  
+  .input-group {
+    gap: 0.375rem;
+  }
+  
+  .input-label {
+    font-size: 0.8rem;
+    gap: 0.125rem;
+  }
+  
+  .input-hint {
+    font-size: 0.65rem;
+    line-height: 1.2;
   }
   
   .input-label-with-toggle {
     flex-direction: column;
     align-items: stretch;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
   
   .toggle-btn {
     align-self: flex-start;
-    font-size: 0.7rem;
-    padding: 0.5rem 0.75rem;
-    min-height: 44px; /* Better touch target */
+    font-size: 0.65rem;
+    padding: 0.375rem 0.5rem;
+    min-height: 40px; /* Better touch target */
+    border-radius: 4px;
+  }
+  
+  .input-wrapper {
+    min-height: 38px; /* Smaller for mobile */
+    flex-wrap: nowrap;
+    border-radius: 6px;
+  }
+  
+  .input-field {
+    padding: 0.3rem 0.5rem; /* Normales Padding für 480px */
+    font-size: 0.8rem;
+    min-width: 0; /* Prevent overflow */
+    flex-shrink: 1;
+  }
+  
+  .input-unit,
+  .currency-symbol {
+    padding: 0 0.375rem; /* Normales Padding für Units */
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  
+  .validation-hint {
+    font-size: 0.65rem;
+    line-height: 1.2;
+    margin-top: 0.25rem;
   }
   
   .preview-item {
@@ -3115,6 +3196,302 @@ const exportToPDF = async () => {
   
   .metric-value {
     font-size: 1.5rem;
+  }
+}
+
+/* Extra small devices (less than 360px) */
+@media (max-width: 360px) {
+  .roi-calculator {
+    padding: 0.375rem;
+    gap: 0.5rem;
+  }
+  
+  .calculator-header,
+  .step-progress,
+  .step-content,
+  .step-navigation {
+    padding: 0.5rem;
+  }
+  
+  .calculator-inputs {
+    padding: 1rem; /* Reduziertes Container-Padding für 360px */
+  }
+  
+  .header-title {
+    font-size: 1.125rem;
+  }
+  
+  .title-brand {
+    font-size: 1.125rem;
+  }
+  
+  .title-product {
+    font-size: 1rem;
+  }
+  
+  .header-subtitle {
+    font-size: 0.7rem;
+  }
+  
+  .input-grid {
+    gap: 1rem;
+  }
+  
+  .input-section {
+    gap: 0.5rem;
+  }
+  
+  .section-title {
+    font-size: 0.9rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .input-group {
+    gap: 0.25rem;
+  }
+  
+  .input-label {
+    font-size: 0.75rem;
+  }
+  
+  .input-hint {
+    font-size: 0.6rem;
+  }
+  
+  .input-wrapper {
+    min-height: 42px;
+    border-radius: 6px;
+  }
+  
+  .input-field {
+    padding: 0.5rem 0.625rem; /* Normales Padding für 360px */
+    font-size: 0.85rem;
+  }
+  
+  .input-unit,
+  .currency-symbol {
+    padding: 0 0.375rem; /* Normales Padding für Units */
+    font-size: 0.75rem;
+  }
+  
+  .toggle-btn {
+    font-size: 0.6rem;
+    padding: 0.25rem 0.375rem;
+    min-height: 36px;
+  }
+  
+  .step-circle {
+    width: 32px;
+    height: 32px;
+    font-size: 0.75rem;
+    min-height: 32px;
+    min-width: 32px;
+  }
+  
+  .step-info {
+    max-width: 70px;
+    margin-top: 0.25rem;
+  }
+  
+  .step-label {
+    font-size: 0.6rem;
+  }
+  
+  .step-description {
+    font-size: 0.45rem;
+  }
+  
+  .steps-title {
+    font-size: 0.8rem;
+  }
+  
+  .steps-counter {
+    font-size: 0.55rem;
+    padding: 0.1rem 0.25rem;
+  }
+  
+  .nav-btn {
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+    min-height: 44px;
+  }
+  
+  .metric-card {
+    padding: 0.75rem;
+    gap: 1rem;
+  }
+  
+  .metric-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.125rem;
+  }
+  
+  .metric-value {
+    font-size: 1.25rem;
+  }
+  
+  .metric-label {
+    font-size: 0.8rem;
+  }
+  
+  .metric-sublabel,
+  .metric-sublabel-top {
+    font-size: 0.65rem;
+  }
+}
+
+/* Ultra-tiny devices (less than 300px) */
+@media (max-width: 300px) {
+  .roi-calculator {
+    padding: 0.25rem;
+    gap: 0.375rem;
+  }
+  
+  .calculator-header,
+  .step-progress,
+  .step-content,
+  .step-navigation {
+    padding: 0.375rem;
+    border-radius: 6px;
+  }
+  
+  .calculator-inputs {
+    padding: 0.75rem; /* Reduziertes Container-Padding */
+  }
+  
+  .header-title {
+    font-size: 1rem;
+  }
+  
+  .title-brand {
+    font-size: 1rem;
+  }
+  
+  .title-product {
+    font-size: 0.9rem;
+  }
+  
+  .header-subtitle {
+    font-size: 0.65rem;
+  }
+  
+  .input-grid {
+    gap: 0.75rem;
+  }
+  
+  .input-section {
+    gap: 0.375rem;
+  }
+  
+  .section-title {
+    font-size: 0.8rem;
+    padding-bottom: 0.375rem;
+  }
+  
+  .input-group {
+    gap: 0.25rem;
+  }
+  
+  .input-label {
+    font-size: 0.7rem;
+  }
+  
+  .input-hint {
+    font-size: 0.55rem;
+  }
+  
+  .input-wrapper {
+    min-height: 36px; /* Very compact for tiny screens */
+    border-radius: 4px;
+    border-width: 1px;
+  }
+  
+  .input-field {
+    padding: 0.25rem 0.25rem; /* Stark reduziertes Padding für 300px */
+    font-size: 0.75rem;
+  }
+  
+  .input-unit,
+  .currency-symbol {
+    padding: 0 0.125rem; /* Minimales Padding für Units bei 300px */
+    font-size: 0.7rem;
+  }
+  
+  .toggle-btn {
+    font-size: 0.55rem;
+    padding: 0.25rem 0.375rem;
+    min-height: 32px;
+  }
+  
+  .step-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+    min-height: 28px;
+    min-width: 28px;
+    border-width: 1px;
+  }
+  
+  .step-info {
+    max-width: 60px;
+    margin-top: 0.25rem;
+  }
+  
+  .step-label {
+    font-size: 0.55rem;
+  }
+  
+  .step-description {
+    font-size: 0.4rem;
+  }
+  
+  .steps-title {
+    font-size: 0.75rem;
+  }
+  
+  .steps-counter {
+    font-size: 0.5rem;
+    padding: 0.1rem 0.2rem;
+  }
+  
+  .nav-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    min-height: 40px;
+    border-radius: 6px;
+  }
+  
+  .metric-card {
+    padding: 0.5rem;
+    gap: 0.75rem;
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .metric-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 1rem;
+    align-self: center;
+  }
+  
+  .metric-value {
+    font-size: 1.125rem;
+  }
+  
+  .metric-label {
+    font-size: 0.75rem;
+  }
+  
+  .metric-sublabel,
+  .metric-sublabel-top {
+    font-size: 0.6rem;
+  }
+  
+  .validation-hint {
+    font-size: 0.6rem;
+    margin-top: 0.125rem;
   }
 }
 

@@ -727,7 +727,7 @@ const login = async () => {
   }
 }
 
-/* Very small screens */
+/* Very small screens - compact BRAM/Calculator layout */
 @media (max-width: 360px) {
   .login-container {
     padding: 0.75rem;
@@ -737,21 +737,107 @@ const login = async () => {
     padding: 1.25rem;
   }
 
-  .brand-icon {
-    width: 50px;
-    height: 50px;
-  }
-
-  .brand-icon i {
-    font-size: 1.5rem;
+  .brand-logo {
+    gap: 0.375rem;
+    margin-bottom: 1.25rem;
   }
 
   .brand-logo-img {
-    width: 130px;
+    width: 120px;
   }
 
   .logo-text {
-    font-size: 1.4rem;
+    font-size: 1.25rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    line-height: 1;
+  }
+
+  .logo-bram {
+    font-size: 1.25rem;
+    line-height: 1;
+  }
+
+  .logo-calculator {
+    font-size: 1rem;
+    line-height: 1;
+    opacity: 0.8;
+  }
+
+  .login-description {
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Ultra small devices - minimal layout */
+@media (max-width: 300px) {
+  .login-container {
+    padding: 0.5rem;
+  }
+
+  .login-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .brand-logo {
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .brand-logo-img {
+    width: 100px;
+  }
+
+  .logo-text {
+    font-size: 1.125rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+  }
+
+  .logo-bram {
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 0.9;
+  }
+
+  .logo-calculator {
+    font-size: 0.875rem;
+    opacity: 0.7;
+    font-weight: 600;
+    line-height: 0.9;
+  }
+
+  .login-description {
+    font-size: 0.8rem;
+    margin-top: 0.375rem;
+  }
+
+  .login-form {
+    gap: 1rem;
+  }
+
+  .input-field {
+    padding: 0.875rem 1rem;
+    font-size: 15px; /* Slightly smaller but still prevents iOS zoom */
+  }
+
+  .login-button {
+    padding: 1rem;
+    font-size: 0.95rem;
+    min-height: 3rem;
+  }
+
+  .checkbox-label,
+  .forgot-link {
+    font-size: 0.8rem;
+  }
+
+  .form-options {
+    margin: 0.5rem 0 0.125rem 0;
   }
 }
 

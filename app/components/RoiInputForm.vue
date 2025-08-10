@@ -330,12 +330,36 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
   gap: 2rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 400px) {
+  .input-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 320px) {
+  .input-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 .input-section {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .section-title {
@@ -359,6 +383,9 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .input-label {
@@ -429,6 +456,9 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
   border: 2px solid #e2e8f0;
   border-radius: 8px;
   transition: all 0.2s ease;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .input-wrapper:hover {
@@ -531,12 +561,169 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
     padding: 0.5rem 0.75rem;
     min-height: 44px;
   }
+  
+  .input-field {
+    padding: 0.625rem 0.75rem;
+  }
+  
+  .input-unit {
+    padding: 0 0.75rem;
+  }
+}
+
+/* Very small devices - optimize spacing further */
+@media (max-width: 360px) {
+  .input-form {
+    gap: 0.5rem;
+  }
+  
+  .input-grid {
+    gap: 0.75rem;
+  }
+  
+  .input-section {
+    gap: 0.5rem;
+  }
+  
+  .section-title {
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .input-field {
+    padding: 0.5rem 0.625rem;
+    font-size: 0.95rem;
+  }
+  
+  .input-unit {
+    padding: 0 0.625rem;
+    font-size: 0.8rem;
+  }
+  
+  .input-label {
+    font-size: 0.8rem;
+  }
+  
+  .input-hint {
+    font-size: 0.7rem;
+  }
+  
+  .toggle-btn {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Extra small devices - minimal spacing */
+@media (max-width: 320px) {
+  .input-form {
+    gap: 0.5rem;
+  }
+  
+  .input-grid {
+    gap: 0.5rem;
+  }
+  
+  .input-section {
+    gap: 0.5rem;
+  }
+  
+  .input-field {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .input-unit {
+    padding: 0 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .section-title {
+    font-size: 0.9rem;
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* Ultra small devices - under 300px */
+@media (max-width: 300px) {
+  .input-form {
+    gap: 0.375rem;
+  }
+  
+  .input-grid {
+    gap: 0.375rem;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .input-section {
+    gap: 0.375rem;
+  }
+  
+  .section-title {
+    font-size: 0.85rem;
+    padding-bottom: 0.375rem;
+    margin-bottom: 0.375rem;
+  }
+  
+  .input-group {
+    gap: 0.25rem;
+  }
+  
+  .input-wrapper {
+    border-radius: 6px;
+    border-width: 1px;
+  }
+  
+  .input-field {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.8rem;
+    min-height: 2.25rem;
+  }
+  
+  .input-unit {
+    padding: 0 0.375rem;
+    font-size: 0.7rem;
+  }
+  
+  .input-label {
+    font-size: 0.75rem;
+  }
+  
+  .input-hint {
+    font-size: 0.65rem;
+  }
+  
+  .input-label-with-toggle {
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+  
+  .toggle-btn {
+    padding: 0.25rem 0.375rem;
+    font-size: 0.65rem;
+    min-height: 36px;
+    border-radius: 4px;
+  }
 }
 
 /* Prevent zoom on input focus for iOS */
 @supports (-webkit-touch-callout: none) {
   .input-field {
     font-size: max(16px, 1rem); /* Prevents zoom on iOS */
+  }
+  
+  /* Ensure minimum font size on very small screens */
+  @media (max-width: 360px) {
+    .input-field {
+      font-size: max(16px, 0.95rem);
+    }
+  }
+  
+  @media (max-width: 320px) {
+    .input-field {
+      font-size: max(16px, 0.9rem);
+    }
   }
 }
 
