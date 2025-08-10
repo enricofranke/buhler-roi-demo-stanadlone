@@ -21,18 +21,51 @@ definePageMeta({
 <style scoped>
 .roi-calculator-page {
   min-height: calc(100vh - 80px);
+  min-height: calc(100dvh - 80px); /* Dynamic viewport height for mobile */
   background: #f8fafc;
 }
 
 .page-container {
-  max-width: 1600px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 0;
+  padding: 2rem;
 }
 
-@media (max-width: 1600px) {
+@media (max-width: 1400px) {
   .page-container {
     max-width: 100%;
+    padding: 1rem;
+  }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  .roi-calculator-page {
+    min-height: calc(100vh - 60px);
+    min-height: calc(100dvh - 60px);
+    background: #f8fafc;
+  }
+  
+  .page-container {
+    padding: 0;
+    margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .roi-calculator-page {
+    min-height: calc(100vh - 50px);
+    min-height: calc(100dvh - 50px);
+  }
+}
+
+/* Safe area support for devices with notches */
+@supports (padding: max(0px)) {
+  .roi-calculator-page {
+    padding-top: max(0px, env(safe-area-inset-top));
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
   }
 }
 </style>

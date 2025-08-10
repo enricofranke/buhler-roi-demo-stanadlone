@@ -9,13 +9,13 @@
         <!-- Header with Bühler Branding -->
         <div class="login-header">
           <div class="brand-logo">
-            <div class="brand-icon">
-              <i class="pi pi-chart-bar"></i>
-            </div>
-            <div class="brand-text">
-              <h1 class="brand-title">Bühler</h1>
-              <p class="brand-subtitle">BRAM Calculator</p>
-            </div>
+            <NuxtImg
+              class="brand-logo-img"
+              src="/images/logo.svg"
+              alt="Bühler"
+              width="220"
+            />
+            <p class="brand-subtitle">BRAM Calculator</p>
           </div>
           <p class="login-description">Admin Access Required</p>
         </div>
@@ -37,6 +37,10 @@
                 placeholder="Enter your username"
                 :disabled="loading"
                 autocomplete="username"
+                inputmode="text"
+                spellcheck="false"
+                autocapitalize="none"
+                autocorrect="off"
               >
             </div>
           </div>
@@ -56,6 +60,10 @@
                 placeholder="Enter your password"
                 :disabled="loading"
                 autocomplete="current-password"
+                inputmode="text"
+                spellcheck="false"
+                autocapitalize="none"
+                autocorrect="off"
               >
               <button
                 type="button"
@@ -112,6 +120,10 @@ useHead({
     {
       name: 'description',
       content: 'Admin login for Bühler BRAM Calculator - Calculate your potential return on investment'
+    },
+    {
+      name: 'viewport',
+      content: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
     }
   ]
 })
@@ -381,6 +393,9 @@ const login = async () => {
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
+  min-height: 3rem; /* Minimum 48px touch target */
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
+  touch-action: manipulation; /* Optimizes for touch */
 }
 
 .login-button:hover:not(:disabled) {
@@ -421,14 +436,16 @@ const login = async () => {
   background: transparent;
   color: #64748b;
   cursor: pointer;
-  padding: 0.25rem;
+  padding: 0.5rem; /* Increased for better touch target */
   border-radius: 8px;
-  width: 2rem;
-  height: 2rem;
+  min-width: 2.75rem; /* Minimum 44px touch target */
+  min-height: 2.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent; /* Remove tap highlight on iOS */
 }
 
 .toggle-visibility:hover:not(:disabled) {
@@ -510,19 +527,40 @@ const login = async () => {
 }
 
 /* Responsive Design */
-@media (max-width: 480px) {
+/* Tablet and smaller screens */
+@media (max-width: 768px) {
   .login-container {
-    padding: 1rem;
+    padding: 1.5rem;
+  }
+
+  .login-wrapper {
+    max-width: 100%;
   }
 
   .login-card {
     padding: 2rem;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  .login-container {
+    padding: 1rem;
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
+  }
+
+  .login-card {
+    padding: 1.5rem;
     border-radius: 16px;
+    margin: 0;
+    width: 100%;
   }
 
   .brand-logo {
     flex-direction: column;
     gap: 0.75rem;
+    margin-bottom: 1.5rem;
   }
 
   .brand-text {
@@ -531,6 +569,52 @@ const login = async () => {
 
   .brand-title {
     font-size: 1.75rem;
+  }
+
+  .brand-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .login-header {
+    margin-bottom: 2rem;
+  }
+
+  .login-form {
+    gap: 1.25rem;
+  }
+
+  .input-field {
+    font-size: 16px; /* Prevents zoom on iOS */
+    padding: 1rem;
+  }
+
+  .login-button {
+    padding: 1.125rem;
+    font-size: 1.05rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .login-container {
+    padding: 0.75rem;
+  }
+
+  .login-card {
+    padding: 1.25rem;
+  }
+
+  .brand-icon {
+    width: 50px;
+    height: 50px;
+  }
+
+  .brand-icon i {
+    font-size: 1.5rem;
+  }
+
+  .brand-title {
+    font-size: 1.5rem;
   }
 }
 
@@ -541,8 +625,75 @@ const login = async () => {
   outline-offset: 2px;
 }
 
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  /* Disable hover effects on touch devices */
+  .login-button:hover:not(:disabled) {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .toggle-visibility:hover:not(:disabled) {
+    background: transparent;
+  }
+  
+  /* Better active states for touch */
+  .login-button:active:not(:disabled) {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+  
+  .toggle-visibility:active:not(:disabled) {
+    background: rgba(0, 155, 145, 0.15);
+    transform: translateY(-50%) scale(0.95);
+  }
+}
+
+/* Keyboard handling improvements */
+@media (max-height: 600px) and (max-width: 768px) {
+  /* Optimize for landscape mobile or small screens */
+  .login-container {
+    padding: 0.5rem;
+    align-items: flex-start;
+    padding-top: 1rem;
+  }
+  
+  .login-card {
+    padding: 1.25rem;
+  }
+  
+  .login-header {
+    margin-bottom: 1.5rem;
+  }
+  
+  .brand-icon {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .brand-title {
+    font-size: 1.5rem;
+  }
+}
+
+/* Prevent zoom on input focus for iOS */
+@supports (-webkit-touch-callout: none) {
+  .input-field {
+    font-size: max(16px, 1rem); /* Prevents zoom on iOS */
+  }
+}
+
 /* Smooth Transitions */
 * {
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Safe area support for devices with notches */
+@supports (padding: max(0px)) {
+  .login-container {
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
 }
 </style>

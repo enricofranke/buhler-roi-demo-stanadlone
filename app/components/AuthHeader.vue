@@ -58,7 +58,7 @@ const logout = async () => {
   background: white;
   border-bottom: 1px solid #e5e7eb;
   padding: 1rem 0;
-  margin-bottom: 2rem;
+  margin-bottom: 0.75rem;
 }
 
 .header-container {
@@ -130,22 +130,71 @@ const logout = async () => {
 }
 
 @media (max-width: 768px) {
+  .auth-header {
+    padding: 0.75rem 0;
+    margin-bottom: 0.5rem;
+  }
+  
   .header-container {
     padding: 0 1rem;
-    flex-direction: column;
-    gap: 1rem;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 0.5rem;
   }
   
   .brand {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.375rem;
+  }
+  
+  .brand-title {
+    font-size: 1.25rem;
+  }
+  
+  .brand-subtitle {
+    font-size: 0.75rem;
   }
   
   .user-info {
-    flex-direction: column;
-    gap: 0.5rem;
-    text-align: center;
+    flex-direction: row;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  
+  .welcome-text {
+    font-size: 0.75rem;
+    display: none; /* Hide welcome text on mobile to save space */
+  }
+  
+  .logout-btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    min-height: 44px; /* Touch target */
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-header {
+    padding: 0.5rem 0;
+    margin-bottom: 0.5rem;
+  }
+  
+  .header-container {
+    padding: 0 0.75rem;
+  }
+  
+  .brand-title {
+    font-size: 1.125rem;
+  }
+  
+  .brand-subtitle {
+    font-size: 0.7rem;
+  }
+  
+  .logout-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.7rem;
   }
 }
 </style>

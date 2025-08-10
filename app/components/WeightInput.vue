@@ -20,13 +20,16 @@
         >lb</button>
       </div>
     </div>
-    <div class="input-wrapper weight-input">
-      <input 
+    <div class="input-wrapper weight-input" :class="{ error }">
+              <input 
         :id="inputId"
         v-model="displayValue"
         type="text" 
         class="input-field"
         :placeholder="placeholder"
+        inputmode="decimal"
+        spellcheck="false"
+        autocorrect="off"
       >
     </div>
   </div>
@@ -42,6 +45,7 @@ interface Props {
   placeholder?: string
   inputId?: string
   unit?: 'kg' | 'lb' | ''
+  error?: boolean
 }
 
 interface Emits {
@@ -55,7 +59,8 @@ const props = withDefaults(defineProps<Props>(), {
   hint: '',
   placeholder: 'e.g. 1000kg, 2200lb, or just 1000',
   inputId: 'weight-input',
-  unit: ''
+  unit: '',
+  error: false
 })
 
 const emit = defineEmits<Emits>()
@@ -205,6 +210,10 @@ defineExpose({
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 2.5rem; /* Minimum 40px touch target */
+  min-width: 2.5rem;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .toggle-btn:hover {
@@ -238,6 +247,12 @@ defineExpose({
   box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1);
 }
 
+/* Error state (matches calculator styles) */
+.input-wrapper.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
 .input-field {
   flex: 1;
   padding: 0.75rem 1rem;
@@ -247,6 +262,9 @@ defineExpose({
   font-weight: 500;
   color: #1e293b;
   outline: none;
+  min-height: 2.5rem; /* Minimum 40px touch target */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .input-field::-webkit-inner-spin-button,
@@ -273,14 +291,65 @@ defineExpose({
 }
 
 /* Responsive Design */
-@media (max-width: 480px) {
-  .input-wrapper.weight-input {
+@media (max-width: 768px) {
+  .input-label-with-toggle {
     flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
   }
   
-  .input-wrapper.weight-input .input-field {
-    border-radius: 8px 8px 0 0;
-    border-bottom: none;
+  .toggle-group {
+    align-self: flex-start;
+  }
+  
+  .toggle-btn {
+    min-height: 44px; /* Standard touch target */
+    min-width: 44px;
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .weight-input-component {
+    gap: 0.375rem;
+  }
+  
+  .input-label-with-toggle {
+    gap: 0.375rem;
+  }
+  
+  .toggle-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent zoom on input focus for iOS */
+@supports (-webkit-touch-callout: none) {
+  .input-field {
+    font-size: max(16px, 1rem); /* Prevents zoom on iOS */
+  }
+}
+
+/* Mobile-specific touch optimizations */
+@media (max-width: 768px) {
+  /* Disable hover effects on touch devices */
+  .input-wrapper:hover {
+    border-color: #e2e8f0;
+  }
+  
+  .toggle-btn:hover {
+    border-color: #e2e8f0;
+    color: #64748b;
+    background: #f8fafc;
+  }
+  
+  /* Better active states for touch */
+  .toggle-btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
   }
 }
 </style>

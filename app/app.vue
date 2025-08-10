@@ -13,6 +13,12 @@ useHead({
     {
       name: 'description',
       content: 'Calculate your potential return on investment with Bühler\'s BRAM service solutions'
+    },
+    { name: 'robots', content: 'noindex, nofollow, noarchive' },
+    { name: 'googlebot', content: 'noindex, nofollow, noarchive' },
+    {
+      name: 'viewport',
+      content: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
     }
   ]
 })
@@ -20,7 +26,6 @@ useHead({
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-@import url('https://cdn.jsdelivr.net/npm/primeicons@7.0.0/primeicons.css');
 
 /* Bühler Theme Colors - from ztheme.ts */
 :root {
@@ -66,6 +71,10 @@ body {
   background: #f8fafc;
   color: #1e293b;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%; /* Prevent text scaling on iOS */
+  touch-action: manipulation; /* Optimizes for touch */
 }
 
 #__nuxt {
@@ -105,6 +114,21 @@ h1, h2, h3, h4, h5, h6, p {
 @media (max-width: 1600px) {
   .container {
     max-width: 100%;
+  }
+}
+
+/* Mobile-specific utilities */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+}
+
+/* Safe area insets for devices with notches */
+@supports (padding: max(0px)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }
 </style>

@@ -1,11 +1,14 @@
 <template>
-  <div class="roi-calculator">
+  <div class="roi-calculator" ref="rootRef">
     <!-- Header Section -->
     <div class="calculator-header">
       <div class="header-content">
         <h2 class="header-title">
           <i class="pi pi-chart-bar" aria-hidden="true"></i>
-          Bühler BRAM Calculator
+          <span class="title-text">
+            <span class="title-brand">Bühler BRAM</span>
+            <span class="title-product">Calculator</span>
+          </span>
         </h2>
         <p class="header-subtitle">
           Calculate your potential return on investment with Bühler's service solutions
@@ -25,7 +28,14 @@
 
     <!-- Step Progress -->
     <div class="step-progress">
-      <div class="progress-container">
+      <div class="steps-header">
+        <h3 class="steps-title">
+          <i class="pi pi-list-check" aria-hidden="true"></i>
+          Steps
+        </h3>
+        <span class="steps-counter">{{ currentStep }} of 3</span>
+      </div>
+      <div class="progress-container" :data-current-step="currentStep">
         <div 
           v-for="step in 3" 
           :key="step"
@@ -50,14 +60,14 @@
     </div>
 
     <!-- Step Content -->
-    <div class="step-content" :class="{ 'step-1': currentStep === 1 }">
+    <div class="step-content" :class="{ 'step-1': currentStep === 1, 'step-3': currentStep === 3 }">
       <!-- Step 1: Customer Information -->
       <div v-if="currentStep === 1" class="step-container">
         <div class="calculator-inputs">
           <div class="step-header">
             <h3 class="step-title">
               <i class="pi pi-user" aria-hidden="true"></i>
-              Customer Information
+              <span class="step-title-text">Customer Information</span>
             </h3>
             <p class="step-subtitle">Please provide your production and operational details</p>
           </div>
@@ -155,13 +165,14 @@
             :label="dailyOutputLabel"
             :hint="dailyOutputHint + ' (e.g. 1000kg or 2200lb)'"
             input-id="daily-output"
+             :error="showValidationErrorsStep1 && (step1ErrorState.dailyOutputKg || step1ErrorState.weightUnit)"
             @update:model-value="handleDailyOutputUpdate"
             @update:unit="handleDailyOutputUnitUpdate"
           />
            <div v-if="showValidationErrorsStep1 && (step1ErrorState.dailyOutputKg || step1ErrorState.weightUnit)" class="validation-hint">
              {{ inputs.dailyOutputKg == null
                 ? 'This field is required.'
-                : (!weightUnit || weightUnit === '' ? 'Please select a unit (kg or lb).' : 'Please enter a positive output.') }}
+                : (!isWeightUnitSelected ? 'Please select a unit (kg or lb).' : 'Please enter a positive output.') }}
            </div>
         </div>
 
@@ -195,28 +206,6 @@
           </div>
 
           <div class="input-group">
-            <label for="unplanned-events" class="input-label">
-              Unplanned Maintenance Events per Machine/Year
-              <span class="input-hint">Unexpected breakdowns per machine annually</span>
-            </label>
-            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.unplannedMaintenanceEvents }">
-              <input 
-                id="unplanned-events"
-                v-model.number="inputs.unplannedMaintenanceEvents"
-                type="number" 
-                class="input-field"
-                min="0"
-                max="365"
-                step="1"
-              />
-              <span class="input-unit">events</span>
-            </div>
-            <div v-if="showValidationErrorsStep1 && step1ErrorState.unplannedMaintenanceEvents" class="validation-hint">
-              {{ inputs.unplannedMaintenanceEvents == null ? 'This field is required.' : '' }}
-            </div>
-          </div>
-
-          <div class="input-group">
             <label for="planned-duration" class="input-label">
               Planned Downtime Duration per Event
               <span class="input-hint">Average hours per planned maintenance</span>
@@ -235,6 +224,28 @@
             </div>
             <div v-if="showValidationErrorsStep1 && step1ErrorState.plannedDowntimeDurationPerEvent" class="validation-hint">
               {{ inputs.plannedDowntimeDurationPerEvent == null ? 'This field is required.' : 'Please enter at least 0.5 hours.' }}
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="unplanned-events" class="input-label">
+              Unplanned Maintenance Events per Machine/Year
+              <span class="input-hint">Unexpected breakdowns per machine annually</span>
+            </label>
+            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.unplannedMaintenanceEvents }">
+              <input 
+                id="unplanned-events"
+                v-model.number="inputs.unplannedMaintenanceEvents"
+                type="number" 
+                class="input-field"
+                min="0"
+                max="365"
+                step="1"
+              />
+              <span class="input-unit">events</span>
+            </div>
+            <div v-if="showValidationErrorsStep1 && step1ErrorState.unplannedMaintenanceEvents" class="validation-hint">
+              {{ inputs.unplannedMaintenanceEvents == null ? 'This field is required.' : '' }}
             </div>
           </div>
 
@@ -266,6 +277,7 @@
             :hint="`Selling price per ${weightUnitLabel} of product`"
             :unit="weightUnit"
             input-id="product-margin"
+             :error="showValidationErrorsStep1 && step1ErrorState.salesPricePerKg"
             @update:model-value="handleProductMarginUpdate"
           />
           <div v-if="showValidationErrorsStep1 && step1ErrorState.salesPricePerKg" class="validation-hint">
@@ -283,14 +295,15 @@
                 v-model.number="inputs.marginPercent"
                 type="number" 
                 class="input-field"
-                min="0"
+                min="1"
                 max="100"
                 step="0.1"
+                @input="clampMarginPercent"
               />
               <span class="input-unit">%</span>
           </div>
             <div v-if="showValidationErrorsStep1 && step1ErrorState.marginPercent" class="validation-hint">
-              {{ inputs.marginPercent == null ? 'This field is required.' : 'Please enter a value between 0 and 100%.' }}
+              {{ inputs.marginPercent == null ? 'This field is required.' : 'Please enter a value between 1 and 100%.' }}
             </div>
         </div>
       </div>
@@ -308,7 +321,7 @@
         <div class="step-header">
           <h3 class="step-title">
             <i class="pi pi-briefcase" aria-hidden="true"></i>
-            Bühler Sales Information
+            <span class="step-title-text">Bühler Sales Information</span>
           </h3>
           <p class="step-subtitle">Sales team: Please provide service solution details</p>
         </div>
@@ -419,18 +432,20 @@
       </div>
       
       <!-- Step 3: Results -->
-      <div v-if="currentStep === 3" class="step-container">
-        <div class="step-header">
-          <h3 class="step-title">
-            <i class="pi pi-chart-line" aria-hidden="true"></i>
-            ROI Analysis Results
-          </h3>
-          <p class="step-subtitle">Your complete return on investment analysis</p>
+      <div v-if="currentStep === 3" class="step-container step-3-results">
+        <!-- ROI Analysis Results Header Card -->
+        <div class="roi-header-card">
+          <div class="step-header">
+            <h3 class="step-title">
+              <i class="pi pi-chart-line" aria-hidden="true"></i>
+              <span class="step-title-text">ROI Analysis Results</span>
+            </h3>
+            <p class="step-subtitle">Your complete return on investment analysis</p>
+          </div>
         </div>
         
-        <div v-if="showResults" class="calculator-results">
-          <!-- Current Downtime Impact -->
-          <div class="metrics-section">
+        <!-- Downtime Impact Card -->
+        <div v-if="showResults" class="metrics-section">
             <h4 class="section-header">Downtime Impact</h4>
             
             <!-- Downtime Hours -->
@@ -552,8 +567,8 @@
             </div>
           </div>
 
-          <!-- Impact of BRAM -->
-          <div class="metrics-section">
+        <!-- Impact of BRAM Card -->
+        <div v-if="showResults" class="metrics-section">
             <h4 class="section-header">Impact of BRAM</h4>
             <div class="results-grid">
               <div class="metric-card success">
@@ -591,8 +606,8 @@
             </div>
           </div>
 
-          <!-- ROI Calculation -->
-          <div class="metrics-section">
+        <!-- ROI Calculation Card -->
+        <div v-if="showResults" class="metrics-section">
             <h4 class="section-header">ROI Calculation</h4>
             <div class="results-grid">
               <div class="metric-card primary">
@@ -619,8 +634,8 @@
             </div>
           </div>
 
-          <!-- Detailed Financial Summary -->
-          <div class="financial-summary">
+        <!-- Detailed Financial Analysis Card -->
+        <div v-if="showResults" class="financial-summary">
             <h4 class="summary-title">
               <i class="pi pi-chart-bar" aria-hidden="true"></i>
               Detailed Financial Analysis
@@ -659,15 +674,14 @@
             </div>
           </div>
 
-          <!-- ROI Visualization -->
-          <div class="chart-container">
+        <!-- ROI Projection Over Time Card -->
+        <div v-if="showResults" class="chart-container">
             <h4 class="chart-title">ROI Projection Over Time</h4>
             <div 
               ref="chartRef"
               class="roi-chart"
             ></div>
           </div>
-        </div>
       </div>
     </div>
 
@@ -762,11 +776,24 @@ const inputs = ref<RoiInputs>({
 
 // Chart reference
 const chartRef = ref<HTMLElement>()
+// Root element ref for scrolling
+const rootRef = ref<HTMLElement | null>(null)
+
+const scrollToTopOfForm = () => {
+  // Prefer scrolling the component container into view; fallback to window
+  if (rootRef.value && typeof rootRef.value.scrollIntoView === 'function') {
+    rootRef.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } else if (typeof window !== 'undefined' && typeof window.scrollTo === 'function') {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let chartInstance: any = null
 
 // Get echarts instance from plugin
-const { $echarts } = useNuxtApp()
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const { $echarts } = useNuxtApp() as unknown as { $echarts: any }
 
 // PDF Export state
 const isExporting = ref(false)
@@ -816,6 +843,9 @@ const dailyOutputHint = computed(() =>
 // Weight unit labels
 const weightUnitLabel = computed(() => weightUnit.value || 'unit')
 
+// Whether a valid unit is selected
+const isWeightUnitSelected = computed(() => weightUnit.value === 'kg' || weightUnit.value === 'lb')
+
 // Handlers for weight input components
 const handleDailyOutputUpdate = (value: number | null) => {
   inputs.value.dailyOutputKg = value
@@ -838,6 +868,17 @@ const clampProductionHours = (e: Event) => {
   if (v < 1) v = 1
   if (v > 24) v = 24
   inputs.value.productionHoursPerDay = v
+}
+
+// Ensure margin percent stays within [1, 100]
+const clampMarginPercent = (e: Event) => {
+  const target = e.target as HTMLInputElement | null
+  if (!target) return
+  let v = Number(target.value)
+  if (Number.isNaN(v)) return
+  if (v < 1) v = 1
+  if (v > 100) v = 100
+  inputs.value.marginPercent = v
 }
 
 // Live calculations for preview
@@ -1239,7 +1280,7 @@ const step1ErrorState = computed(() => {
     plannedDowntimeDurationPerEvent: !(v.plannedDowntimeDurationPerEvent != null && v.plannedDowntimeDurationPerEvent >= 0.5),
     unplannedDowntimeDurationPerEvent: !(v.unplannedDowntimeDurationPerEvent != null && v.unplannedDowntimeDurationPerEvent >= 0.5),
     salesPricePerKg: !(v.salesPricePerKg != null && v.salesPricePerKg >= 0),
-    marginPercent: !(v.marginPercent != null && v.marginPercent >= 0 && v.marginPercent <= 100)
+    marginPercent: !(v.marginPercent != null && v.marginPercent >= 1 && v.marginPercent <= 100)
   }
 })
 
@@ -1291,6 +1332,8 @@ const goToStep = (step: number) => {
     if (step === 3) {
       calculateResults()
     }
+    // Scroll to the top of the step content so users see the inputs immediately
+    nextTick(() => scrollToTopOfForm())
   }
 }
 
@@ -1309,6 +1352,8 @@ const nextStep = () => {
     if (currentStep.value === 3) {
       calculateResults()
     }
+    // Scroll up to the top of the newly shown step
+    nextTick(() => scrollToTopOfForm())
   } else if (currentStep.value < 3 && !canProceedToNextStep.value) {
     // Trigger visual validation on current step only
     if (currentStep.value === 1) showValidationErrorsStep1.value = true
@@ -1326,6 +1371,8 @@ const nextStep = () => {
 const previousStep = () => {
   if (currentStep.value > 1) {
     currentStep.value--
+    // Scroll to top of the step after navigating back
+    nextTick(() => scrollToTopOfForm())
   }
 }
 
@@ -1819,10 +1866,13 @@ const exportToPDF = async () => {
 .roi-calculator {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1rem;
   padding: 2rem;
   background: transparent;
   min-height: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Header Styles */
@@ -1852,6 +1902,23 @@ const exportToPDF = async () => {
 
 .header-title i {
   color: var(--buhler-primary);
+}
+
+.title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  line-height: 1;
+}
+
+.title-brand {
+  font-weight: 700;
+  color: var(--buhler-primary);
+}
+
+.title-product {
+  font-weight: 600;
+  color: #1e293b;
 }
 
 .header-subtitle {
@@ -1903,7 +1970,39 @@ const exportToPDF = async () => {
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 2rem;
+}
+
+.steps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.steps-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+.steps-title i {
+  color: var(--buhler-primary);
+  font-size: 1rem;
+}
+
+.steps-counter {
+  background: rgba(0, 155, 145, 0.1);
+  color: var(--buhler-primary);
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .progress-container {
@@ -1997,23 +2096,36 @@ const exportToPDF = async () => {
   border-radius: 12px;
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 2rem;
 }
 
-.step-content.step-1 {
+/* ROI Header Card */
+.roi-header-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.step-content.step-1,
+.step-content.step-3 {
   background: transparent;
   box-shadow: none;
   padding: 0;
 }
 
 .downtime-impact-wrapper {
-  margin-top: 2rem;
+  margin-top: 1.5rem;
 }
 
 .step-container {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
+}
+
+/* Step 3 Results - einheitliches Spacing wie überall */
+.step-3-results {
+  gap: 1rem;
 }
 
 .step-header {
@@ -2035,6 +2147,10 @@ const exportToPDF = async () => {
 
 .step-title i {
   color: var(--buhler-primary);
+}
+
+.step-title-text {
+  display: block;
 }
 
 .step-subtitle {
@@ -2090,7 +2206,7 @@ const exportToPDF = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem;
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -2362,7 +2478,7 @@ const exportToPDF = async () => {
 .calculator-results {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .metrics-section {
@@ -2371,7 +2487,7 @@ const exportToPDF = async () => {
   gap: 1rem;
   background: white;
   border-radius: 12px;
-  padding: 2rem;
+  padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -2649,38 +2765,108 @@ const exportToPDF = async () => {
 @media (max-width: 768px) {
   .roi-calculator {
     padding: 1rem;
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
   .calculator-header {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
     padding: 1.5rem;
+    text-align: center;
   }
 
   .header-actions {
     flex-direction: column;
     align-self: stretch;
   }
+  
+  .header-title {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  
+  .title-text {
+    align-items: center;
+  }
+  
+  .title-brand {
+    font-size: 1.75rem;
+    line-height: 1;
+  }
+  
+  .title-product {
+    font-size: 1.5rem;
+    line-height: 1;
+    margin-top: -0.125rem;
+  }
+  
+  .header-subtitle {
+    font-size: 1rem;
+    line-height: 1.4;
+    max-width: 90%;
+    margin: 0.75rem auto 0;
+  }
 
   .step-progress {
-    padding: 1.5rem;
+    padding: 1rem;
   }
   
-  .progress-container {
-    flex-direction: column;
-    align-items: center;
-    gap: 2rem;
+  .steps-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
   }
   
-  .step-circle {
-    width: 50px;
-    height: 50px;
+  .steps-title {
     font-size: 1rem;
   }
   
+  .steps-counter {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+  
+  .progress-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    position: relative;
+  }
+  
+  /* No connection lines on mobile for cleaner look */
+  
+  .progress-step {
+    flex: 1;
+    max-width: 120px;
+    z-index: 2;
+  }
+  
+  .step-circle {
+    width: 56px;
+    height: 56px;
+    font-size: 1.125rem;
+    border-width: 3px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
   .step-info {
-    max-width: 200px;
+    max-width: 120px;
+    margin-top: 0.5rem;
+  }
+  
+  .step-label {
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  
+  .step-description {
+    font-size: 0.65rem;
+    line-height: 1.2;
   }
 
   .step-content {
@@ -2689,20 +2875,30 @@ const exportToPDF = async () => {
   
   .step-header {
     text-align: left;
+    padding-bottom: 1rem;
   }
   
   .step-title {
     justify-content: flex-start;
     font-size: 1.5rem;
+    flex-direction: row;
+    gap: 0.75rem;
+    align-items: center;
+  }
+  
+  .step-title-text {
+    line-height: 1.2;
   }
   
   .step-subtitle {
     font-size: 1rem;
+    line-height: 1.3;
+    text-align: left;
   }
 
   .input-grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
   }
   
   .sales-grid {
@@ -2715,7 +2911,7 @@ const exportToPDF = async () => {
   }
   
   .step-navigation {
-    padding: 1rem 1.5rem;
+    padding: 1rem;
     flex-wrap: wrap;
     gap: 1rem;
   }
@@ -2747,14 +2943,137 @@ const exportToPDF = async () => {
     padding: 1rem;
   }
   
+  .calculator-header {
+    padding: 1rem;
+    text-align: center;
+  }
+  
+  .header-title {
+    font-size: 1.375rem;
+    line-height: 1.1;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+    justify-content: center;
+  }
+  
+  .title-brand {
+    font-size: 1.375rem;
+    line-height: 0.95;
+  }
+  
+  .title-product {
+    font-size: 1.25rem;
+    line-height: 0.95;
+    margin-top: -0.1rem;
+  }
+  
+  .header-subtitle {
+    font-size: 0.8rem;
+    line-height: 1.25;
+    max-width: 100%;
+    margin: 0.5rem auto 0;
+    padding: 0 0.25rem;
+    text-align: center;
+  }
+  
+  .step-header {
+    text-align: left;
+    padding-bottom: 0.75rem;
+  }
+  
   .step-title {
     font-size: 1.25rem;
-    flex-direction: column;
+    flex-direction: row;
     gap: 0.5rem;
+    justify-content: flex-start;
+    align-items: center;
+  }
+  
+  .step-title-text {
+    line-height: 1.1;
+  }
+  
+  .step-subtitle {
+    font-size: 0.85rem;
+    line-height: 1.25;
+    text-align: left;
+    margin: 0;
+  }
+  
+  .step-progress {
+    padding: 0.75rem;
+  }
+  
+  .steps-header {
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
+  
+  .steps-title {
+    font-size: 0.9rem;
+  }
+  
+  .steps-counter {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.65rem;
   }
   
   .progress-container {
-    gap: 1.5rem;
+    gap: 0.25rem;
+    padding: 0.75rem 0;
+    justify-content: space-around;
+  }
+  
+  /* No progress lines on small screens for cleaner mobile UX */
+  
+  .progress-step {
+    flex: 1;
+    max-width: 90px;
+    padding: 0.25rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    /* Touch feedback */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  /* Enhanced active step highlighting */
+  .progress-step.active {
+    background: rgba(0, 155, 145, 0.08);
+    border: 2px solid rgba(0, 155, 145, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 155, 145, 0.15);
+  }
+  
+  /* Touch feedback for clickable steps */
+  .progress-step.clickable:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+  
+  .step-circle {
+    width: 44px;
+    height: 44px;
+    font-size: 0.95rem;
+    border-width: 2px;
+    /* Adequate touch target */
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .step-info {
+    max-width: 90px;
+    margin-top: 0.5rem;
+  }
+  
+  .step-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  
+  .step-description {
+    font-size: 0.55rem;
+    line-height: 1.1;
   }
   
   .input-section {
@@ -2774,7 +3093,8 @@ const exportToPDF = async () => {
   .toggle-btn {
     align-self: flex-start;
     font-size: 0.7rem;
-    padding: 0.375rem 0.625rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 44px; /* Better touch target */
   }
   
   .preview-item {
@@ -2784,8 +3104,10 @@ const exportToPDF = async () => {
   }
   
   .nav-btn {
-    padding: 0.625rem 1rem;
-    font-size: 0.8rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.85rem;
+    min-height: 48px; /* Better touch target */
+    border-radius: 12px;
   }
   
   .metric-card {

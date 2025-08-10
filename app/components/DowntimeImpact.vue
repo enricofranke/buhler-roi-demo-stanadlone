@@ -171,6 +171,75 @@ const formatNumber = (value: number): string => {
 .metric-value { font-size: 1.5rem; font-weight: 700; color: #1e293b; line-height: 1; }
 .metric-sublabel { font-size: 0.75rem; color: #94a3b8; }
 .metric-sublabel-top { font-size: 0.75rem; color: #64748b; font-weight: 500; margin-bottom: 0.25rem; }
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  .downtime-card {
+    padding: 1.5rem;
+  }
+  
+  .results-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .metric-card {
+    padding: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .downtime-card {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+  
+  .section-header {
+    font-size: 1.125rem;
+    text-align: center;
+  }
+  
+  .metric-card {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .metric-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+  
+  .metric-value {
+    font-size: 1.25rem;
+  }
+  
+  .metric-label {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .downtime-card {
+    padding: 1rem;
+  }
+  
+  .metric-card {
+    padding: 0.875rem;
+  }
+  
+  .metric-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.125rem;
+  }
+  
+  .metric-value {
+    font-size: 1.125rem;
+  }
+}
 </style>
 
 

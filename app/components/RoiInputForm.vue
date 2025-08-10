@@ -36,6 +36,7 @@
               min="1"
               max="100"
               step="1"
+              inputmode="numeric"
             />
             <span class="input-unit">units</span>
           </div>
@@ -56,6 +57,7 @@
               min="1"
               max="365"
               step="1"
+              inputmode="numeric"
             />
             <span class="input-unit">days</span>
           </div>
@@ -76,6 +78,7 @@
               min="1"
               max="24"
               step="0.5"
+              inputmode="decimal"
             />
             <span class="input-unit">hours</span>
           </div>
@@ -114,6 +117,7 @@
               min="0"
               max="100"
               step="1"
+              inputmode="numeric"
             />
             <span class="input-unit">events</span>
           </div>
@@ -134,6 +138,7 @@
               min="0.5"
               max="72"
               step="0.5"
+              inputmode="decimal"
             />
             <span class="input-unit">hours</span>
           </div>
@@ -154,6 +159,7 @@
               min="0"
               max="365"
               step="1"
+              inputmode="numeric"
             />
             <span class="input-unit">events</span>
           </div>
@@ -174,6 +180,7 @@
               min="0.5"
               max="48"
               step="0.5"
+              inputmode="decimal"
             />
             <span class="input-unit">hours</span>
           </div>
@@ -197,12 +204,13 @@
             <input 
               id="margin-percent"
               :value="inputs.marginPercent"
-              @input="onNumberInput('marginPercent', $event)"
+              @input="onMarginInput($event)"
               type="number" 
               class="input-field"
-              min="0"
+              min="1"
               max="100"
               step="0.1"
+              inputmode="decimal"
             />
             <span class="input-unit">%</span>
           </div>
@@ -285,6 +293,22 @@ const onNumberInput = (key: keyof RoiInputs, event: Event) => {
   updateInput(key, raw === '' ? null : Number(raw))
 }
 
+// Clamp margin percent strictly to [1, 100]
+const onMarginInput = (event: Event) => {
+  const target = event.target as HTMLInputElement | null
+  if (!target) return
+  const raw = target.value
+  if (raw === '') {
+    updateInput('marginPercent', null)
+    return
+  }
+  let value = Number(raw)
+  if (Number.isNaN(value)) return
+  if (value < 1) value = 1
+  if (value > 100) value = 100
+  updateInput('marginPercent', value)
+}
+
 const toggleMachinesTerminology = () => {
   const newTerminology = props.machinesTerminology === 'operation' ? 'scope' : 'operation'
   emit('update:machinesTerminology', newTerminology)
@@ -299,13 +323,13 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
 .input-form {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 
 .input-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 3rem;
+  gap: 2rem;
 }
 
 .input-section {
@@ -376,6 +400,9 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
   color: #64748b;
   cursor: pointer;
   transition: all 0.2s ease;
+  min-height: 2.5rem; /* Minimum 40px touch target */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .toggle-btn:hover {
@@ -422,6 +449,9 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
   font-weight: 500;
   color: #1e293b;
   outline: none;
+  min-height: 2.5rem; /* Minimum 40px touch target */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .input-field::-webkit-inner-spin-button,
@@ -439,9 +469,13 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .input-form {
+    gap: 1rem;
+  }
+  
   .input-grid {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
   }
   
   .input-label-with-toggle {
@@ -452,8 +486,77 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
   
   .toggle-btn {
     align-self: flex-start;
-    font-size: 0.7rem;
-    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 44px; /* Standard touch target */
+  }
+  
+  .input-section {
+    gap: 1rem;
+  }
+  
+  .section-title {
+    font-size: 1.125rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .input-form {
+    gap: 0.75rem;
+  }
+  
+  .input-grid {
+    gap: 1rem;
+  }
+  
+  .input-section {
+    gap: 0.75rem;
+  }
+  
+  .section-title {
+    font-size: 1rem;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .input-label-with-toggle {
+    gap: 0.5rem;
+  }
+  
+  .toggle-btn {
+    font-size: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    min-height: 44px;
+  }
+}
+
+/* Prevent zoom on input focus for iOS */
+@supports (-webkit-touch-callout: none) {
+  .input-field {
+    font-size: max(16px, 1rem); /* Prevents zoom on iOS */
+  }
+}
+
+/* Mobile-specific touch optimizations */
+@media (max-width: 768px) {
+  /* Disable hover effects on touch devices */
+  .input-wrapper:hover {
+    border-color: #e2e8f0;
+  }
+  
+  .toggle-btn:hover {
+    border-color: #e2e8f0;
+    color: #64748b;
+    background: #f8fafc;
+  }
+  
+  /* Better active states for touch */
+  .toggle-btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
   }
 }
 </style>

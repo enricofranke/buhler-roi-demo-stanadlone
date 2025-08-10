@@ -1,10 +1,11 @@
 <template>
-  <div class="customer-data-page">
-    <!-- Header Section -->
-    <div class="page-header">
+  <div class="customer-data-page-wrapper">
+    <div class="customer-data-page">
+      <!-- Header Section -->
+      <div class="page-header">
       <div class="header-content">
         <h1 class="page-title">
-          <i class="fas fa-chart-bar" aria-hidden="true"></i>
+          <i class="pi pi-chart-bar" aria-hidden="true"></i>
           Bühler BRAM Calculator
         </h1>
         <p class="page-subtitle">
@@ -16,7 +17,7 @@
     <!-- Company Name Input -->
     <div class="company-section">
       <h2 class="section-title">
-        <i class="fas fa-building"></i>
+        <i class="pi pi-building"></i>
         Company Information
       </h2>
       <div class="company-input-group">
@@ -29,6 +30,10 @@
           type="text" 
           class="company-input"
           placeholder="Enter your company name"
+          inputmode="text"
+          spellcheck="false"
+          autocapitalize="words"
+          autocorrect="off"
         >
       </div>
     </div>
@@ -36,7 +41,7 @@
     <!-- Input Section using extracted component -->
     <div class="input-section">
       <h2 class="section-title">
-        <i class="fas fa-edit"></i>
+        <i class="pi pi-pencil"></i>
         Production & Downtime Data
       </h2>
       
@@ -69,7 +74,10 @@
         >
           <div class="btn-content">
             <div class="btn-icon">
-              <i class="fas fa-file-pdf" aria-hidden="true"></i>
+              <div v-if="isExporting" class="spinner"></div>
+              <ClientOnly v-else>
+                <i class="pi pi-file-pdf" aria-hidden="true"></i>
+              </ClientOnly>
             </div>
             <div class="btn-text">
               <span class="btn-label">{{ isExporting ? 'Generating...' : 'Export PDF' }}</span>
@@ -77,9 +85,12 @@
             </div>
           </div>
           <div class="btn-arrow">
-            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+            <ClientOnly>
+              <i class="pi pi-download" aria-hidden="true"></i>
+            </ClientOnly>
           </div>
         </button>
+      </div>
       </div>
     </div>
   </div>
@@ -102,6 +113,10 @@ useHead({
     {
       name: 'description',
       content: 'Enter your production data to calculate your potential ROI with Bühler BRAM solutions'
+    },
+    {
+      name: 'viewport',
+      content: 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover'
     }
   ]
 })
@@ -361,13 +376,20 @@ const formatNumber = (value) => {
 
 <style scoped>
 /* Page Layout */
-.customer-data-page {
+.customer-data-page-wrapper {
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   padding: 2rem;
+}
+
+.customer-data-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.25rem;
 }
 
 /* Header */
@@ -417,6 +439,10 @@ const formatNumber = (value) => {
   background: #f8fafc;
   font-size: 0.95rem;
   transition: all 0.2s ease;
+  width: 100%;
+  min-height: 3rem; /* Minimum 48px touch target */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .company-input:hover {
@@ -502,8 +528,8 @@ const formatNumber = (value) => {
 
 .input-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 3rem;
   margin-bottom: 2rem;
 }
 
@@ -554,6 +580,10 @@ const formatNumber = (value) => {
   background: #f8fafc;
   font-size: 0.95rem;
   transition: all 0.2s ease;
+  width: 100%;
+  min-height: 3rem; /* Minimum 48px touch target */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .field-input:hover {
@@ -684,7 +714,7 @@ const formatNumber = (value) => {
 }
 
 .export-btn-enhanced {
-  background: linear-gradient(135deg, var(--buhler-primary) 0%, #00c4a7 100%);
+  background: linear-gradient(135deg, var(--buhler-primary) 0%, var(--buhler-primary-400) 100%);
   color: white;
   border: none;
   border-radius: 16px;
@@ -696,10 +726,15 @@ const formatNumber = (value) => {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 
     0 10px 15px -3px rgba(0, 155, 145, 0.3),
-    0 4px 6px -2px rgba(0, 155, 145, 0.1);
+    0 4px 6px -2px rgba(0, 155, 145, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   min-width: 280px;
+  min-height: 4rem; /* Minimum 64px touch target for important actions */
   overflow: hidden;
   position: relative;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .export-btn-enhanced::before {
@@ -709,9 +744,20 @@ const formatNumber = (value) => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%);
   opacity: 0;
   transition: opacity 0.3s ease;
+}
+
+.export-btn-enhanced::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.6s ease;
 }
 
 .export-btn-enhanced:hover::before {
@@ -734,6 +780,24 @@ const formatNumber = (value) => {
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
+  min-width: 3rem;
+  min-height: 3rem;
+}
+
+/* Spinner Animation for Loading State */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-text {
@@ -747,16 +811,17 @@ const formatNumber = (value) => {
   font-size: 1rem;
   font-weight: 600;
   line-height: 1.2;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn-subtitle {
   font-size: 0.75rem;
   opacity: 0.9;
   font-weight: 400;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn-arrow {
-  background: rgba(255, 255, 255, 0.15);
   padding: 1rem;
   display: flex;
   align-items: center;
@@ -769,7 +834,13 @@ const formatNumber = (value) => {
   transform: translateY(-2px);
   box-shadow: 
     0 20px 25px -5px rgba(0, 155, 145, 0.4),
-    0 10px 10px -5px rgba(0, 155, 145, 0.2);
+    0 10px 10px -5px rgba(0, 155, 145, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: linear-gradient(135deg, var(--buhler-primary-400) 0%, var(--buhler-primary-300) 100%);
+}
+
+.export-btn-enhanced:hover:not(:disabled)::after {
+  left: 100%;
 }
 
 .export-btn-enhanced:hover:not(:disabled) .btn-arrow {
@@ -784,6 +855,7 @@ const formatNumber = (value) => {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
   box-shadow: 
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -793,29 +865,232 @@ const formatNumber = (value) => {
   transform: none;
 }
 
-/* Mobile responsive */
+/* Mobile responsive export */
 @media (max-width: 768px) {
   .export-container {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
+    padding: 1.25rem;
   }
   
   .export-btn-enhanced {
     min-width: 100%;
+    justify-content: center;
+  }
+  
+  .btn-content {
+    padding: 1.25rem;
+  }
+  
+  /* Disable hover effects on touch devices */
+  .export-btn-enhanced:hover:not(:disabled) {
+    transform: none;
+    box-shadow: 
+      0 10px 15px -3px rgba(0, 155, 145, 0.3),
+      0 4px 6px -2px rgba(0, 155, 145, 0.1);
+  }
+  
+  .export-btn-enhanced:hover:not(:disabled) .btn-arrow {
+    transform: none;
+  }
+  
+  /* Better active states for touch */
+  .export-btn-enhanced:active:not(:disabled) {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
   }
 }
 
-/* Additional responsive adjustments */
-@media (max-width: 768px) {
-  .customer-data-page {
+@media (max-width: 480px) {
+  .export-container {
     padding: 1rem;
+    border-radius: 16px;
+  }
+  
+  .export-title {
+    font-size: 1.125rem;
+  }
+  
+  .export-description {
+    font-size: 0.8rem;
+  }
+  
+  .export-btn-enhanced {
+    min-height: 4.5rem; /* Larger touch target on mobile */
+  }
+  
+  .btn-content {
+    padding: 1.125rem 1rem;
+  }
+  
+  .btn-icon {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0.625rem;
+  }
+  
+  .btn-label {
+    font-size: 0.95rem;
+  }
+  
+  .btn-subtitle {
+    font-size: 0.7rem;
+  }
+  
+  .btn-arrow {
+    padding: 0.875rem;
+  }
+}
+
+/* Enhanced Mobile Responsive Design */
+/* Tablet and smaller screens */
+@media (max-width: 1400px) {
+  .customer-data-page-wrapper {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-data-page-wrapper {
+    padding: 1rem;
+  }
+  
+  .customer-data-page {
+    gap: 1rem;
   }
   
   .page-header {
     flex-direction: column;
     gap: 1rem;
     text-align: center;
+    padding: 1.5rem;
+  }
+  
+  .page-title {
+    font-size: 1.75rem;
+  }
+  
+  .page-subtitle {
+    font-size: 1rem;
+  }
+  
+  .company-section,
+  .input-section {
+    padding: 1.5rem;
+  }
+  
+  .section-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  
+  .input-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  .customer-data-page-wrapper {
+    padding: 0.75rem;
+  }
+  
+  .customer-data-page {
+    gap: 0.75rem;
+  }
+  
+  .page-header,
+  .company-section,
+  .input-section {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  
+  .page-title {
+    font-size: 1.5rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+  
+  .page-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .section-title {
+    font-size: 1.125rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .input-grid {
+    gap: 1.5rem;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+  .customer-data-page-wrapper {
+    padding: 0.5rem;
+  }
+  
+  .page-header,
+  .company-section,
+  .input-section {
+    padding: 1rem;
+  }
+  
+  .page-title {
+    font-size: 1.25rem;
+  }
+  
+  .export-container {
+    padding: 1rem;
+  }
+}
+
+/* Prevent zoom on input focus for iOS */
+@supports (-webkit-touch-callout: none) {
+  .company-input,
+  .field-input {
+    font-size: max(16px, 0.95rem); /* Prevents zoom on iOS */
+  }
+}
+
+/* Mobile-specific touch optimizations */
+@media (max-width: 768px) {
+  /* Disable hover effects on touch devices */
+  .company-input:hover,
+  .field-input:hover,
+  .toggle-btn:hover {
+    border-color: #e2e8f0;
+    background: #f8fafc;
+  }
+  
+  /* Better active states for touch */
+  .company-input:focus,
+  .field-input:focus {
+    border-color: var(--buhler-primary);
+    box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1);
+    background: white;
+  }
+  
+  .toggle-btn:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+  }
+}
+
+/* Safe area support for devices with notches */
+@supports (padding: max(0px)) {
+  .customer-data-page-wrapper {
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 }
 </style>

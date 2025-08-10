@@ -4,14 +4,17 @@
       {{ label }}
       <span v-if="hint" class="input-hint">{{ hint }}</span>
     </label>
-    <div class="input-wrapper currency">
+    <div class="input-wrapper currency" :class="{ error }">
       <span class="currency-symbol">$</span>
-      <input 
+              <input 
         :id="inputId"
         v-model="displayValue"
         type="text" 
         class="input-field"
         :placeholder="placeholder"
+        inputmode="decimal"
+        spellcheck="false"
+        autocorrect="off"
       />
       <span class="input-unit">per {{ unitLabel }}</span>
     </div>
@@ -28,6 +31,7 @@ interface Props {
   placeholder?: string
   inputId?: string
   unit?: 'kg' | 'lb' | ''
+  error?: boolean
 }
 
 interface Emits {
@@ -40,7 +44,8 @@ const props = withDefaults(defineProps<Props>(), {
   hint: '',
   placeholder: '0.00',
   inputId: 'currency-weight-input',
-  unit: ''
+  unit: '',
+  error: false
 })
 
 const emit = defineEmits<Emits>()
@@ -133,6 +138,12 @@ watch(() => props.unit, () => {
   box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1);
 }
 
+/* Error state (matches calculator styles) */
+.input-wrapper.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
 .input-field {
   flex: 1;
   padding: 0.75rem 0.5rem;
@@ -142,6 +153,9 @@ watch(() => props.unit, () => {
   font-weight: 500;
   color: #1e293b;
   outline: none;
+  min-height: 2.5rem; /* Minimum 40px touch target */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .input-field::-webkit-inner-spin-button,
@@ -162,5 +176,52 @@ watch(() => props.unit, () => {
   color: #64748b;
   font-size: 0.875rem;
   font-weight: 500;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  .currency-weight-input-component {
+    gap: 0.375rem;
+  }
+  
+  .input-wrapper {
+    min-height: 44px; /* Standard touch target */
+  }
+  
+  .input-field {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .currency-weight-input-component {
+    gap: 0.25rem;
+  }
+  
+  .currency-symbol,
+  .input-unit {
+    font-size: 0.8rem;
+    padding: 0 0.75rem;
+  }
+  
+  .input-field {
+    padding: 0.75rem 0.5rem;
+    min-height: 44px;
+  }
+}
+
+/* Prevent zoom on input focus for iOS */
+@supports (-webkit-touch-callout: none) {
+  .input-field {
+    font-size: max(16px, 1rem); /* Prevents zoom on iOS */
+  }
+}
+
+/* Mobile-specific touch optimizations */
+@media (max-width: 768px) {
+  /* Disable hover effects on touch devices */
+  .input-wrapper:hover {
+    border-color: #e2e8f0;
+  }
 }
 </style>
