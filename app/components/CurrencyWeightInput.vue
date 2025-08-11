@@ -119,6 +119,18 @@ watch(() => props.unit, () => {
   font-size: 0.75rem;
 }
 
+/* Prevent accidental list styling for labels and hints */
+.input-label,
+.input-hint {
+  list-style: none;
+  padding-left: 0;
+}
+
+.input-label::marker,
+.input-hint::marker {
+  content: none;
+}
+
 .input-wrapper {
   display: flex;
   align-items: center;

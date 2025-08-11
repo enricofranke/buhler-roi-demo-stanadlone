@@ -21,7 +21,7 @@
       </div>
     </div>
     <div class="input-wrapper weight-input" :class="{ error }">
-              <input 
+      <input 
         :id="inputId"
         v-model="displayValue"
         type="text" 
@@ -30,6 +30,8 @@
         inputmode="decimal"
         spellcheck="false"
         autocorrect="off"
+        @focus="onFocus"
+        @blur="onBlur"
       >
     </div>
   </div>
@@ -68,9 +70,13 @@ const emit = defineEmits<Emits>()
 // Internal unit state, initialized from prop if provided
 const selectedUnit = ref<'kg' | 'lb' | ''>(props.unit)
 
-// Conversion functions with proper rounding
+// Conversion functions with proper rounding (used for display after edit)
 const kgToLb = (kg: number): number => Math.round(kg * 2.20462 * 10) / 10
 const lbToKg = (lb: number): number => Math.round(lb / 2.20462 * 10) / 10
+// Editing state: while typing, show raw input without auto-formatting
+const isEditing = ref(false)
+const rawInput = ref('')
+
 
 // Parse input with unit detection
 const parseWeightInput = (input: string): { value: number; unit: 'kg' | 'lb' | '' } | null => {
@@ -104,6 +110,7 @@ const setUnit = (unit: 'kg' | 'lb') => {
 // Display value computed property
 const displayValue = computed({
   get: () => {
+    if (isEditing.value) return rawInput.value
     const value = props.modelValue
     if (!value) return ''
     
@@ -113,6 +120,21 @@ const displayValue = computed({
     return value.toString() // fallback if no unit selected
   },
   set: (newValue: string) => {
+    rawInput.value = newValue
+    const lower = newValue.toLowerCase().trim()
+    // If user types only the unit, switch unit and clear the input
+    if (lower === 'kg' || lower === 'k g') {
+      selectedUnit.value = 'kg'
+      emit('update:unit', 'kg')
+      rawInput.value = ''
+      return
+    }
+    if (lower === 'lb' || lower === 'lbs') {
+      selectedUnit.value = 'lb'
+      emit('update:unit', 'lb')
+      rawInput.value = ''
+      return
+    }
     if (!newValue || newValue.trim() === '') {
       emit('update:modelValue', null)
       return
@@ -124,6 +146,8 @@ const displayValue = computed({
       if (parsed.unit === 'kg' || parsed.unit === 'lb') {
         selectedUnit.value = parsed.unit
         emit('update:unit', parsed.unit)
+        // Strip the unit letters from the input while editing
+        rawInput.value = parsed.value.toString()
         // Always store in kg internally
         const kgValue = parsed.unit === 'kg' ? parsed.value : lbToKg(parsed.value)
         emit('update:modelValue', kgValue)
@@ -161,6 +185,24 @@ defineExpose({
     selectedUnit.value = unit
   }
 })
+
+// Handlers for focus/blur to control editing state
+const onFocus = () => {
+  isEditing.value = true
+  // Initialize raw input with the currently displayed formatted value
+  const value = props.modelValue
+  if (value === null || value === undefined) {
+    rawInput.value = ''
+  } else if (selectedUnit.value === 'lb') {
+    rawInput.value = kgToLb(value).toString()
+  } else {
+    rawInput.value = value.toString()
+  }
+}
+
+const onBlur = () => {
+  isEditing.value = false
+}
 </script>
 
 <style scoped>
@@ -190,6 +232,18 @@ defineExpose({
   font-weight: 400;
   color: #64748b;
   font-size: 0.75rem;
+}
+
+/* Ensure no automatic list markers appear for label/hint text */
+.input-label,
+.input-hint {
+  list-style: none;
+  padding-left: 0;
+}
+
+.input-label::marker,
+.input-hint::marker {
+  content: none;
 }
 
 .toggle-group {
