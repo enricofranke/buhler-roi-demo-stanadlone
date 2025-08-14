@@ -102,6 +102,7 @@
           :hint="dailyOutputHint + ' (e.g. 1000kg or 2200lb)'"
           input-id="daily-output"
           :unit="weightUnit"
+          :error="showErrors && f('dailyOutputKg').$invalid"
           @update:model-value="updateInput('dailyOutputKg', $event)"
           @update:unit="updateWeightUnit"
         />
@@ -219,6 +220,7 @@
           :hint="`Selling price per ${weightUnitLabel} of product`"
           :unit="weightUnit"
           input-id="sales-price"
+          :error="showErrors && f('salesPricePerKg').$invalid"
           @update:model-value="updateInput('salesPricePerKg', $event)"
         />
         <div v-if="showErrors && f('salesPricePerKg').$invalid" class="validation-hint">

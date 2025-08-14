@@ -177,6 +177,20 @@ const companyNameInvalid = computed(() => !internalCompanyName.value || internal
   gap: 0.5rem;
 }
 
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  position: relative;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.input-wrapper:hover { border-color: #cbd5e1; }
+.input-wrapper:focus-within { border-color: var(--buhler-primary); box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1); }
+.input-wrapper.error { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1); }
+
 .company-label {
   display: flex;
   flex-direction: column;
@@ -193,16 +207,21 @@ const companyNameInvalid = computed(() => !internalCompanyName.value || internal
 }
 
 .company-input {
-  padding: 0.875rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  background: #f8fafc;
-  font-size: 0.95rem;
-  transition: all 0.2s ease;
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1e293b;
+  outline: none;
 }
 
-.company-input:hover { border-color: #cbd5e1; }
-.company-input:focus { outline: none; border-color: var(--buhler-primary); box-shadow: 0 0 0 3px rgba(0, 155, 145, 0.1); background: white; }
+.validation-hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #ef4444;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {

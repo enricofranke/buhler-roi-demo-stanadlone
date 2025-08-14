@@ -23,7 +23,7 @@
         <div class="metric-card warning">
           <div class="metric-icon">
             <ClientOnly>
-              <i class="pi pi-balance-scale" aria-hidden="true"></i>
+              <i class="pi pi-arrow-down-right" aria-hidden="true"></i>
             </ClientOnly>
           </div>
           <div class="metric-content">
@@ -72,7 +72,7 @@
         <div class="metric-card danger">
           <div class="metric-icon">
             <ClientOnly>
-              <i class="pi pi-balance-scale" aria-hidden="true"></i>
+              <i class="pi pi-arrow-down-right" aria-hidden="true"></i>
             </ClientOnly>
           </div>
           <div class="metric-content">
