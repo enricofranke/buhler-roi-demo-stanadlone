@@ -37,269 +37,38 @@
 
     <!-- Step Content -->
     <div class="step-content" :class="{ 'step-1': currentStep === 1, 'step-3': currentStep === 3 }">
-      <!-- Step 1: Customer Information -->
+      <!-- Step 1: Customer Information (shared component) -->
       <div v-if="currentStep === 1" class="step-container">
-        <div class="calculator-inputs">
-          <div class="step-header">
-            <h3 class="step-title">
-              <i class="pi pi-user" aria-hidden="true"></i>
-              <span class="step-title-text">Customer Information</span>
-            </h3>
-            <p class="step-subtitle">Please provide your production and operational details</p>
-          </div>
-          
-      <div class="input-grid">
-        <!-- Production Parameters -->
-        <div class="input-section">
-            <h4 class="section-title">
-            <i class="pi pi-cog" aria-hidden="true"></i>
-            Production Parameters
-            </h4>
-          
-          <div class="input-group">
-            <div class="input-label-with-toggle">
-              <label for="machines-in-operation" class="input-label">
-                {{ machinesLabel }}
-                <span class="input-hint">{{ machinesHint }}</span>
-              </label>
-              <div class="terminology-toggle">
-                <button 
-                  type="button"
-                  @click="machinesTerminology = machinesTerminology === 'operation' ? 'scope' : 'operation'"
-                  class="toggle-btn"
-                  :class="{ active: machinesTerminology === 'operation' }"
-                >
-                  <i class="pi pi-sync" aria-hidden="true"></i>
-                  {{ machinesTerminology === 'operation' ? 'Switch to Scope' : 'Switch to Operation' }}
-                </button>
-              </div>
-            </div>
-            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.machinesInOperation }">
-              <input 
-                id="machines-in-operation"
-                v-model.number="inputs.machinesInOperation"
-                type="number" 
-                class="input-field"
-                min="1"
-                max="100"
-                step="1"
-              />
-              <span class="input-unit">units</span>
-            </div>
-            <div v-if="showValidationErrorsStep1 && step1ErrorState.machinesInOperation" class="validation-hint">
-              {{ inputs.machinesInOperation == null ? 'This field is required.' : 'Please enter at least 1 machine.' }}
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="production-days" class="input-label">
-              Production Days per Year
-              <span class="input-hint">Number of production days annually</span>
-            </label>
-            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.productionDaysPerYear }">
-              <input 
-                id="production-days"
-                v-model.number="inputs.productionDaysPerYear"
-                type="number" 
-                class="input-field"
-                min="1"
-                max="365"
-                step="1"
-              />
-              <span class="input-unit">days</span>
-            </div>
-            <div v-if="showValidationErrorsStep1 && step1ErrorState.productionDaysPerYear" class="validation-hint">
-              {{ inputs.productionDaysPerYear == null ? 'This field is required.' : 'Please enter a value between 1 and 365 days.' }}
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="production-hours" class="input-label">
-              Production Hours per Day
-              <span class="input-hint">Average daily operating hours</span>
-            </label>
-            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.productionHoursPerDay }">
-              <input 
-                id="production-hours"
-                v-model.number="inputs.productionHoursPerDay"
-                type="number" 
-                class="input-field"
-                min="1"
-                max="24"
-                step="0.5"
-                @input="clampProductionHours"
-              />
-              <span class="input-unit">hours</span>
-            </div>
-            <div v-if="showValidationErrorsStep1 && step1ErrorState.productionHoursPerDay" class="validation-hint">
-              {{ inputs.productionHoursPerDay == null ? 'This field is required.' : 'Please enter a value between 1 and 24 hours.' }}
-            </div>
-          </div>
-
-           <WeightInput
-            :model-value="inputs.dailyOutputKg"
-            :label="dailyOutputLabel"
-            :hint="dailyOutputHint + ' (e.g. 1000kg or 2200lb)'"
-            input-id="daily-output"
-             :error="showValidationErrorsStep1 && (step1ErrorState.dailyOutputKg || step1ErrorState.weightUnit)"
-            @update:model-value="handleDailyOutputUpdate"
-            @update:unit="handleDailyOutputUnitUpdate"
-          />
-           <div v-if="showValidationErrorsStep1 && (step1ErrorState.dailyOutputKg || step1ErrorState.weightUnit)" class="validation-hint">
-             {{ inputs.dailyOutputKg == null
-                ? 'This field is required.'
-                : (!isWeightUnitSelected ? 'Please select a unit (kg or lb).' : 'Please enter a positive output.') }}
-           </div>
-        </div>
-
-        <!-- Downtime Impact -->
-        <div class="input-section">
-            <h4 class="section-title">
-            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-              Current Downtime Parameters
-            </h4>
-          
-          <div class="input-group">
-            <label for="planned-events" class="input-label">
-              Planned Maintenance Events per Machine/Year
-              <span class="input-hint">Scheduled maintenance stops per machine annually</span>
-            </label>
-            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.plannedMaintenanceEvents }">
-              <input 
-                id="planned-events"
-                v-model.number="inputs.plannedMaintenanceEvents"
-                type="number" 
-                class="input-field"
-                min="0"
-                max="100"
-                step="1"
-              />
-              <span class="input-unit">events</span>
-            </div>
-            <div v-if="showValidationErrorsStep1 && step1ErrorState.plannedMaintenanceEvents" class="validation-hint">
-              {{ inputs.plannedMaintenanceEvents == null ? 'This field is required.' : '' }}
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="planned-duration" class="input-label">
-              Planned Downtime Duration per Event
-              <span class="input-hint">Average hours per planned maintenance</span>
-            </label>
-            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.plannedDowntimeDurationPerEvent }">
-              <input 
-                id="planned-duration"
-                v-model.number="inputs.plannedDowntimeDurationPerEvent"
-                type="number" 
-                class="input-field"
-                min="0.5"
-                max="72"
-                step="0.5"
-              />
-              <span class="input-unit">hours</span>
-            </div>
-            <div v-if="showValidationErrorsStep1 && step1ErrorState.plannedDowntimeDurationPerEvent" class="validation-hint">
-              {{ inputs.plannedDowntimeDurationPerEvent == null ? 'This field is required.' : 'Please enter at least 0.5 hours.' }}
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="unplanned-events" class="input-label">
-              Unplanned Maintenance Events per Machine/Year
-              <span class="input-hint">Unexpected breakdowns per machine annually</span>
-            </label>
-            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.unplannedMaintenanceEvents }">
-              <input 
-                id="unplanned-events"
-                v-model.number="inputs.unplannedMaintenanceEvents"
-                type="number" 
-                class="input-field"
-                min="0"
-                max="365"
-                step="1"
-              />
-              <span class="input-unit">events</span>
-            </div>
-            <div v-if="showValidationErrorsStep1 && step1ErrorState.unplannedMaintenanceEvents" class="validation-hint">
-              {{ inputs.unplannedMaintenanceEvents == null ? 'This field is required.' : '' }}
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="unplanned-duration" class="input-label">
-              Unplanned Downtime Duration per Event
-              <span class="input-hint">Average hours per unplanned breakdown</span>
-            </label>
-            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.unplannedDowntimeDurationPerEvent }">
-              <input 
-                id="unplanned-duration"
-                v-model.number="inputs.unplannedDowntimeDurationPerEvent"
-                type="number" 
-                class="input-field"
-                min="0.5"
-                max="48"
-                step="0.5"
-              />
-              <span class="input-unit">hours</span>
-            </div>
-            <div v-if="showValidationErrorsStep1 && step1ErrorState.unplannedDowntimeDurationPerEvent" class="validation-hint">
-              {{ inputs.unplannedDowntimeDurationPerEvent == null ? 'This field is required.' : 'Please enter at least 0.5 hours.' }}
-            </div>
-          </div>
-
-          <CurrencyWeightInput
-            :model-value="inputs.salesPricePerKg"
-            :label="`Sales Price per ${weightUnitLabel}`"
-            :hint="`Selling price per ${weightUnitLabel} of product`"
-            :unit="weightUnit"
-            input-id="product-margin"
-             :error="showValidationErrorsStep1 && step1ErrorState.salesPricePerKg"
-            @update:model-value="handleProductMarginUpdate"
-          />
-          <div v-if="showValidationErrorsStep1 && step1ErrorState.salesPricePerKg" class="validation-hint">
-            {{ inputs.salesPricePerKg == null ? 'This field is required.' : 'Please enter a non-negative price.' }}
-          </div>
-
-          <div class="input-group">
-            <label for="margin-percent" class="input-label">
-              Margin
-              <span class="input-hint">Percentage of sales price</span>
-            </label>
-            <div class="input-wrapper" :class="{ error: showValidationErrorsStep1 && step1ErrorState.marginPercent }">
-              <input 
-                id="margin-percent"
-                v-model.number="inputs.marginPercent"
-                type="number" 
-                class="input-field"
-                min="1"
-                max="100"
-                step="0.1"
-                @input="clampMarginPercent"
-              />
-              <span class="input-unit">%</span>
-          </div>
-            <div v-if="showValidationErrorsStep1 && step1ErrorState.marginPercent" class="validation-hint">
-              {{ inputs.marginPercent == null ? 'This field is required.' : 'Please enter a value between 1 and 100%.' }}
-            </div>
-        </div>
-      </div>
-        </div>
-      </div>
+        <Step1CustomerInfo
+          :inputs="inputs"
+          :machines-terminology="machinesTerminology"
+          :weight-unit="weightUnit"
+          v-model:show-errors="showValidationErrorsStep1"
+          title="Customer Information"
+          subtitle="Enter the customer's production and operational details"
+          @update:inputs="(v) => (inputs = v)"
+          @update:machines-terminology="(v) => (machinesTerminology = v)"
+          @update:weight-unit="(v) => (weightUnit = v)"
+        >
+          <template #downtime>
+            <DowntimeImpact :calculations="liveCalculations" :weight-unit="weightUnit" />
+          </template>
+        </Step1CustomerInfo>
       </div>
 
-      <!-- Live Results Preview - separate card -->
-      <div v-if="currentStep === 1" class="downtime-impact-wrapper">
-        <DowntimeImpact :calculations="liveCalculations" :weight-unit="weightUnit" />
-      </div>
+      
 
       <!-- Step 2: Bühler Sales Information -->
       <div v-if="currentStep === 2" class="step-container">
-        <div class="step-header">
-          <h3 class="step-title">
-            <i class="pi pi-briefcase" aria-hidden="true"></i>
-            <span class="step-title-text">Bühler Sales Information</span>
-          </h3>
-          <p class="step-subtitle">Sales team: Please provide service solution details</p>
+        <!-- Sales Header Card -->
+        <div class="sales-header-card">
+          <div class="step-header">
+            <h3 class="step-title">
+              <i class="pi pi-briefcase" aria-hidden="true"></i>
+              <span class="step-title-text">Bühler Sales Information</span>
+            </h3>
+            <p class="step-subtitle">Sales team: Please provide service solution details</p>
+          </div>
         </div>
         
         <div class="input-grid sales-grid">
@@ -453,7 +222,7 @@
             <div class="results-grid">
               <div class="metric-card info">
                 <div class="metric-icon">
-                  <i class="pi pi-box" aria-hidden="true"></i>
+                  <i class="pi pi-balance-scale" aria-hidden="true"></i>
                 </div>
                 <div class="metric-content">
                   <span class="metric-label">Annual Production Loss</span>
@@ -465,7 +234,7 @@
 
               <div class="metric-card info">
                 <div class="metric-icon">
-                  <i class="pi pi-box" aria-hidden="true"></i>
+                  <i class="pi pi-balance-scale" aria-hidden="true"></i>
                 </div>
                 <div class="metric-content">
                   <span class="metric-label">Annual Production Loss</span>
@@ -520,7 +289,7 @@
 
                 <div class="metric-card total-card">
                   <div class="metric-icon">
-                    <i class="pi pi-box" aria-hidden="true"></i>
+                    <i class="pi pi-balance-scale" aria-hidden="true"></i>
                   </div>
                   <div class="metric-content">
                     <span class="metric-label">Total Production Loss</span>
@@ -658,6 +427,16 @@
               class="roi-chart"
             ></div>
           </div>
+
+        <!-- Export Action Bar for Results -->
+        <div v-if="showResults" class="export-section">
+          <ExportActionBar 
+            :can-export="showResults && isStepCompleted(1) && isStepCompleted(2)" 
+            :is-exporting="isExporting" 
+            @export="exportToPDF"
+            @attempt="onExportAttempt"
+          />
+        </div>
       </div>
     </div>
 
@@ -690,9 +469,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import WeightInput from './WeightInput.vue'
-import CurrencyWeightInput from './CurrencyWeightInput.vue'
 import DowntimeImpact from './DowntimeImpact.vue'
+import Step1CustomerInfo from './Step1CustomerInfo.vue'
+import ExportActionBar from './ExportActionBar.vue'
 
 interface RoiInputs {
   machinesInOperation: number | null
@@ -787,8 +566,8 @@ const completedSteps = ref<Set<number>>(new Set())
 // Toggle for machine terminology
 const machinesTerminology = ref<'operation' | 'scope'>('scope')
 
-// Weight unit system
-const weightUnit = ref<'kg' | 'lb' | ''>('')
+// Weight unit system - default to 'lb'
+const weightUnit = ref<'kg' | 'lb' | ''>('lb')
 
 // Conversion function (for display purposes)
 const kgToLb = (kg: number): number => Math.round(kg * 2.20462 * 10) / 10
@@ -798,64 +577,16 @@ const machinesLabel = computed(() =>
   machinesTerminology.value === 'operation' ? 'Machines in Operation' : 'Machines in Scope'
 )
 
-const machinesHint = computed(() => 
-  machinesTerminology.value === 'operation' 
-    ? 'Number of machines currently operating in your facility'
-    : 'Number of machines within the project scope'
-)
-
 const dailyOutputLabel = computed(() => 
   machinesTerminology.value === 'operation' 
     ? 'Daily Output of machines in operation'
     : 'Daily Output of machines in scope'
 )
 
-const dailyOutputHint = computed(() => 
-  machinesTerminology.value === 'operation' 
-    ? 'Average production output per day from operating machines'
-    : 'Average production output per day from machines in scope'
-)
-
 // Weight unit labels
 const weightUnitLabel = computed(() => weightUnit.value || 'unit')
 
-// Whether a valid unit is selected
-const isWeightUnitSelected = computed(() => weightUnit.value === 'kg' || weightUnit.value === 'lb')
-
-// Handlers for weight input components
-const handleDailyOutputUpdate = (value: number | null) => {
-  inputs.value.dailyOutputKg = value
-}
-
-const handleDailyOutputUnitUpdate = (unit: 'kg' | 'lb' | '') => {
-  weightUnit.value = unit
-}
-
-const handleProductMarginUpdate = (value: number | null) => {
-  inputs.value.salesPricePerKg = value
-}
-
-// Ensure production hours stay within [1, 24]
-const clampProductionHours = (e: Event) => {
-  const target = e.target as HTMLInputElement | null
-  if (!target) return
-  let v = Number(target.value)
-  if (Number.isNaN(v)) v = 1
-  if (v < 1) v = 1
-  if (v > 24) v = 24
-  inputs.value.productionHoursPerDay = v
-}
-
-// Ensure margin percent stays within [1, 100]
-const clampMarginPercent = (e: Event) => {
-  const target = e.target as HTMLInputElement | null
-  if (!target) return
-  let v = Number(target.value)
-  if (Number.isNaN(v)) return
-  if (v < 1) v = 1
-  if (v > 100) v = 100
-  inputs.value.marginPercent = v
-}
+// Removed unused field handlers; validation and clamping are handled within form components
 
 // Live calculations for preview
 const liveCalculations = computed(() => {
@@ -1247,8 +978,8 @@ const step1ErrorState = computed(() => {
   const v = inputs.value
   return {
     machinesInOperation: !(v.machinesInOperation != null && v.machinesInOperation >= 1),
-    productionDaysPerYear: !(v.productionDaysPerYear != null && v.productionDaysPerYear >= 1 && v.productionDaysPerYear <= 365),
-    productionHoursPerDay: !(v.productionHoursPerDay != null && v.productionHoursPerDay >= 1 && v.productionHoursPerDay <= 24),
+    productionDaysPerYear: !(v.productionDaysPerYear == null || (v.productionDaysPerYear >= 1 && v.productionDaysPerYear <= 365)),
+    productionHoursPerDay: !(v.productionHoursPerDay == null || (v.productionHoursPerDay >= 0 && v.productionHoursPerDay <= 24)),
     dailyOutputKg: !(v.dailyOutputKg != null && v.dailyOutputKg > 0),
     weightUnit: !(weightUnit.value === 'kg' || weightUnit.value === 'lb'),
     plannedMaintenanceEvents: !(v.plannedMaintenanceEvents != null && v.plannedMaintenanceEvents >= 0),
@@ -1256,7 +987,7 @@ const step1ErrorState = computed(() => {
     plannedDowntimeDurationPerEvent: !(v.plannedDowntimeDurationPerEvent != null && v.plannedDowntimeDurationPerEvent >= 0.5),
     unplannedDowntimeDurationPerEvent: !(v.unplannedDowntimeDurationPerEvent != null && v.unplannedDowntimeDurationPerEvent >= 0.5),
     salesPricePerKg: !(v.salesPricePerKg != null && v.salesPricePerKg >= 0),
-    marginPercent: !(v.marginPercent != null && v.marginPercent >= 1 && v.marginPercent <= 100)
+    marginPercent: !(v.marginPercent == null || (v.marginPercent >= 0 && v.marginPercent <= 100))
   }
 })
 
@@ -1368,6 +1099,19 @@ const calculateResults = () => {
   })
 }
 
+// When export is attempted while disabled, surface validation and scroll to first error
+const onExportAttempt = () => {
+  // If step 1 or 2 not complete, enable their validation flags
+  if (!isStepCompleted(1)) showValidationErrorsStep1.value = true
+  if (!isStepCompleted(2)) showValidationErrorsStep2.value = true
+  nextTick(() => {
+    const firstError = document.querySelector('.input-wrapper.error') as HTMLElement | null
+    if (firstError && typeof firstError.scrollIntoView === 'function') {
+      firstError.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  })
+}
+
 // Only watch calculations changes to update chart (not inputs)
 watch(calculations, () => {
   if (showResults.value) {
@@ -1414,21 +1158,23 @@ onMounted(() => {
   })
 })
 
-// Formatting helpers
+// Formatting helpers – use spaces as thousands separators
+const formatWithSpaces = (value: number, fractionDigits = 0): string => {
+  if (value == null || !isFinite(value)) return '0'
+  const fixed = fractionDigits != null ? value.toFixed(fractionDigits) : String(value)
+  const parts = fixed.split('.')
+  const intPart = parts[0] || '0'
+  const fracPart = parts[1]
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  return fracPart ? `${grouped}.${fracPart}` : grouped
+}
+
 const formatCurrency = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value)
+  return `$${formatWithSpaces(Math.round(value), 0)}`
 }
 
 const formatNumber = (value: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(value)
+  return formatWithSpaces(Math.round(value), 0)
 }
 
 const formatPercentage = (value: number): string => {
@@ -2099,6 +1845,15 @@ const exportToPDF = async () => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* Sales Header Card */
+.sales-header-card {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
 .step-content.step-1,
 .step-content.step-3 {
   background: transparent;
@@ -2106,9 +1861,7 @@ const exportToPDF = async () => {
   padding: 0;
 }
 
-.downtime-impact-wrapper {
-  margin-top: 1.5rem;
-}
+/* removed .downtime-impact-wrapper (duplicate outside component) */
 
 .step-container {
   display: flex;
@@ -2797,6 +2550,11 @@ const exportToPDF = async () => {
     padding: 1.5rem;
     text-align: center;
   }
+  
+  .sales-header-card {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
 
   .header-actions {
     flex-direction: column;
@@ -2971,7 +2729,8 @@ const exportToPDF = async () => {
   .calculator-header,
   .step-progress,
   .step-content,
-  .step-navigation {
+  .step-navigation,
+  .sales-header-card {
     padding: 0.75rem;
     border-radius: 8px;
   }

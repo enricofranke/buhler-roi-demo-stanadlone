@@ -1,12 +1,13 @@
 <template>
   <div class="input-form">
-    <div class="input-grid">
-      <!-- Production Parameters -->
-      <div class="input-section">
-        <h4 class="section-title">
-          <i class="pi pi-cog" aria-hidden="true"></i>
-          Production Parameters
-        </h4>
+    <div class="parameter-card">
+      <div class="input-grid">
+        <!-- Production Parameters -->
+        <div class="input-section">
+          <h4 class="section-title">
+            <i class="pi pi-cog" aria-hidden="true"></i>
+            Production Parameters
+          </h4>
         
         <div class="input-group">
           <div class="input-label-with-toggle">
@@ -26,7 +27,7 @@
               </button>
             </div>
           </div>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ error: showErrors && f('machinesInOperation').$invalid }">
             <input 
               id="machines-in-operation"
               :value="inputs.machinesInOperation"
@@ -34,11 +35,13 @@
               type="number" 
               class="input-field"
               min="1"
-              max="100"
               step="1"
               inputmode="numeric"
             />
             <span class="input-unit">units</span>
+          </div>
+          <div v-if="showErrors && f('machinesInOperation').$invalid" class="validation-hint">
+            Please enter at least 1 machine.
           </div>
         </div>
 
@@ -47,11 +50,12 @@
             Production Days per Year
             <span class="input-hint">Number of production days annually</span>
           </label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ error: showErrors && f('productionDaysPerYear').$invalid }">
             <input 
               id="production-days"
               :value="inputs.productionDaysPerYear"
               @input="onNumberInput('productionDaysPerYear', $event)"
+              @blur="onNumberInput('productionDaysPerYear', $event)"
               type="number" 
               class="input-field"
               min="1"
@@ -61,6 +65,9 @@
             />
             <span class="input-unit">days</span>
           </div>
+          <div v-if="showErrors && f('productionDaysPerYear').$invalid" class="validation-hint">
+            Please enter a value between 1 and 365 days.
+          </div>
         </div>
 
         <div class="input-group">
@@ -68,22 +75,27 @@
             Production Hours per Day
             <span class="input-hint">Average daily operating hours</span>
           </label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ error: showErrors && f('productionHoursPerDay').$invalid }">
             <input 
               id="production-hours"
               :value="inputs.productionHoursPerDay"
               @input="onNumberInput('productionHoursPerDay', $event)"
+              @blur="onNumberInput('productionHoursPerDay', $event)"
               type="number" 
               class="input-field"
-              min="1"
+              min="0"
               max="24"
               step="0.5"
               inputmode="decimal"
             />
             <span class="input-unit">hours</span>
           </div>
+          <div v-if="showErrors && f('productionHoursPerDay').$invalid" class="validation-hint">
+            Please enter a value between 0 and 24 hours.
+          </div>
         </div>
 
+        <div :class="{ error: showErrors && f('dailyOutputKg').$invalid }">
         <WeightInput
           :model-value="inputs.dailyOutputKg"
           :label="dailyOutputLabel"
@@ -93,21 +105,25 @@
           @update:model-value="updateInput('dailyOutputKg', $event)"
           @update:unit="updateWeightUnit"
         />
-      </div>
+        <div v-if="showErrors && f('dailyOutputKg').$invalid" class="validation-hint">
+          Please enter a positive daily output.
+        </div>
+        </div>
+        </div>
 
-      <!-- Downtime Impact -->
-      <div class="input-section">
-        <h4 class="section-title">
-          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-          Current Downtime Parameters
-        </h4>
+        <!-- Current Downtime Parameters -->
+        <div class="input-section">
+          <h4 class="section-title">
+            <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            Current Downtime Parameters
+          </h4>
         
         <div class="input-group">
           <label for="planned-events" class="input-label">
             Planned Maintenance Events per Machine/Year
             <span class="input-hint">Scheduled maintenance stops per machine annually</span>
           </label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ error: showErrors && f('plannedMaintenanceEvents').$invalid }">
             <input 
               id="planned-events"
               :value="inputs.plannedMaintenanceEvents"
@@ -115,11 +131,13 @@
               type="number" 
               class="input-field"
               min="0"
-              max="100"
               step="1"
               inputmode="numeric"
             />
             <span class="input-unit">events</span>
+          </div>
+          <div v-if="showErrors && f('plannedMaintenanceEvents').$invalid" class="validation-hint">
+            Please enter a non-negative number.
           </div>
         </div>
 
@@ -128,19 +146,22 @@
             Planned Downtime Duration per Event
             <span class="input-hint">Average hours per planned maintenance</span>
           </label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ error: showErrors && f('plannedDowntimeDurationPerEvent').$invalid }">
             <input 
               id="planned-duration"
               :value="inputs.plannedDowntimeDurationPerEvent"
               @input="onNumberInput('plannedDowntimeDurationPerEvent', $event)"
               type="number" 
               class="input-field"
-              min="0.5"
+              min="0"
               max="72"
               step="0.5"
               inputmode="decimal"
             />
             <span class="input-unit">hours</span>
+          </div>
+          <div v-if="showErrors && f('plannedDowntimeDurationPerEvent').$invalid" class="validation-hint">
+            Please enter a non-negative number of hours.
           </div>
         </div>
 
@@ -149,7 +170,7 @@
             Unplanned Maintenance Events per Machine/Year
             <span class="input-hint">Unexpected breakdowns per machine annually</span>
           </label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ error: showErrors && f('unplannedMaintenanceEvents').$invalid }">
             <input 
               id="unplanned-events"
               :value="inputs.unplannedMaintenanceEvents"
@@ -157,11 +178,13 @@
               type="number" 
               class="input-field"
               min="0"
-              max="365"
               step="1"
               inputmode="numeric"
             />
             <span class="input-unit">events</span>
+          </div>
+          <div v-if="showErrors && f('unplannedMaintenanceEvents').$invalid" class="validation-hint">
+            Please enter a non-negative number.
           </div>
         </div>
 
@@ -170,22 +193,26 @@
             Unplanned Downtime Duration per Event
             <span class="input-hint">Average hours per unplanned breakdown</span>
           </label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ error: showErrors && f('unplannedDowntimeDurationPerEvent').$invalid }">
             <input 
               id="unplanned-duration"
               :value="inputs.unplannedDowntimeDurationPerEvent"
               @input="onNumberInput('unplannedDowntimeDurationPerEvent', $event)"
               type="number" 
               class="input-field"
-              min="0.5"
+              min="0"
               max="48"
               step="0.5"
               inputmode="decimal"
             />
             <span class="input-unit">hours</span>
           </div>
+          <div v-if="showErrors && f('unplannedDowntimeDurationPerEvent').$invalid" class="validation-hint">
+            Please enter a non-negative number of hours.
+          </div>
         </div>
 
+        <div :class="{ error: showErrors && f('salesPricePerKg').$invalid }">
         <CurrencyWeightInput
           :model-value="inputs.salesPricePerKg"
           :label="`Sales Price per ${weightUnitLabel}`"
@@ -194,34 +221,45 @@
           input-id="sales-price"
           @update:model-value="updateInput('salesPricePerKg', $event)"
         />
+        <div v-if="showErrors && f('salesPricePerKg').$invalid" class="validation-hint">
+          Please enter a non-negative price.
+        </div>
+        </div>
 
         <div class="input-group">
           <label for="margin-percent" class="input-label">
             Margin
             <span class="input-hint">Percentage of sales price</span>
           </label>
-          <div class="input-wrapper">
+          <div class="input-wrapper" :class="{ error: showErrors && f('marginPercent').$invalid }">
             <input 
               id="margin-percent"
               :value="inputs.marginPercent"
               @input="onMarginInput($event)"
               type="number" 
               class="input-field"
-              min="1"
+              min="0"
               max="100"
               step="0.1"
               inputmode="decimal"
             />
             <span class="input-unit">%</span>
           </div>
+          <div v-if="showErrors && f('marginPercent').$invalid" class="validation-hint">
+            Please enter a margin between 0% and 100%.
+          </div>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
+import { useRoiInputRules } from '../composables/useRoiInputRules'
+import useVuelidate from '@vuelidate/core'
+import { required, minValue, maxValue, between } from '@vuelidate/validators'
 
 interface RoiInputs {
   machinesInOperation: number | null
@@ -249,6 +287,38 @@ const emit = defineEmits<{
   'update:machinesTerminology': [terminology: 'operation' | 'scope']
   'update:weightUnit': [unit: 'kg' | 'lb' | '']
 }>()
+
+// Vuelidate rules bound to props.inputs
+const rules = computed(() => ({
+  machinesInOperation: { required, minValue: minValue(1) },
+  productionDaysPerYear: { required, minValue: minValue(1), maxValue: maxValue(365) },
+  productionHoursPerDay: { required, minValue: minValue(0), maxValue: maxValue(24) },
+  dailyOutputKg: { required, minValue: minValue(0.000001) },
+  plannedMaintenanceEvents: { required, minValue: minValue(0) },
+  plannedDowntimeDurationPerEvent: { required, minValue: minValue(0) },
+  unplannedMaintenanceEvents: { required, minValue: minValue(0) },
+  unplannedDowntimeDurationPerEvent: { required, minValue: minValue(0) },
+  salesPricePerKg: { required, minValue: minValue(0) },
+  marginPercent: { required, between: between(0, 100) },
+}))
+
+// Create Vuelidate validator instance
+const v$ = useVuelidate(rules, computed(() => props.inputs))
+
+// Control from parent to visually show errors (customer-data triggers it on export attempt)
+const showErrors = defineModel<boolean>('showErrors', { default: false })
+
+watch(() => showErrors.value, (val) => {
+  if (val) {
+    v$.value.$touch()
+  }
+})
+
+// Helper to access a field's validation state in template
+const f = (name: keyof RoiInputs) => {
+  const obj = (v$.value as unknown as Record<string, { $invalid: boolean }>)[name]
+  return obj ?? { $invalid: false }
+}
 
 // Computed labels based on terminology toggle
 const machinesLabel = computed(() => 
@@ -287,25 +357,52 @@ const updateInput = (key: keyof RoiInputs, value: string | number | null) => {
   emit('update:inputs', newInputs)
 }
 
+const {
+  clampProductionHours,
+  clampProductionDays,
+  clampMarginPercent,
+  clampMachinesInOperation,
+  clampIntegerMinZero,
+} = useRoiInputRules()
+
 const onNumberInput = (key: keyof RoiInputs, event: Event) => {
   const target = event.target as HTMLInputElement | null
   const raw = target?.value ?? ''
-  updateInput(key, raw === '' ? null : Number(raw))
+  let value: number | null = null
+  let shouldReflect = false
+  switch (key) {
+    case 'machinesInOperation':
+      value = clampMachinesInOperation(raw)
+      shouldReflect = true
+      break
+    case 'plannedMaintenanceEvents':
+    case 'unplannedMaintenanceEvents':
+      value = clampIntegerMinZero(raw)
+      shouldReflect = true
+      break
+    case 'productionHoursPerDay':
+      value = clampProductionHours(raw)
+      shouldReflect = true
+      break
+    case 'productionDaysPerYear':
+      value = clampProductionDays(raw)
+      shouldReflect = true
+      break
+    default:
+      value = raw === '' ? null : Number(raw)
+  }
+  updateInput(key, value)
+  // Spiegel den gekappten Wert sofort im Input
+  if (shouldReflect && target) {
+    target.value = value == null ? '' : String(value)
+  }
 }
 
-// Clamp margin percent strictly to [1, 100]
+// Clamp margin percent to [0, 100], allow null
 const onMarginInput = (event: Event) => {
   const target = event.target as HTMLInputElement | null
   if (!target) return
-  const raw = target.value
-  if (raw === '') {
-    updateInput('marginPercent', null)
-    return
-  }
-  let value = Number(raw)
-  if (Number.isNaN(value)) return
-  if (value < 1) value = 1
-  if (value > 100) value = 100
+  const value = clampMarginPercent(target.value)
   updateInput('marginPercent', value)
 }
 
@@ -324,6 +421,13 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+}
+
+.parameter-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .input-grid {
@@ -473,6 +577,11 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
   box-sizing: border-box;
 }
 
+.input-wrapper.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
 .input-wrapper:hover {
   border-color: #cbd5e1;
 }
@@ -509,10 +618,21 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
   font-weight: 500;
 }
 
+.validation-hint {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #ef4444;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .input-form {
     gap: 1rem;
+  }
+  
+  .parameter-card {
+    padding: 1.5rem;
+    border-radius: 12px;
   }
   
   .input-grid {
@@ -546,6 +666,11 @@ const updateWeightUnit = (unit: 'kg' | 'lb' | '') => {
 @media (max-width: 480px) {
   .input-form {
     gap: 0.75rem;
+  }
+  
+  .parameter-card {
+    padding: 1rem;
+    border-radius: 12px;
   }
   
   .input-grid {

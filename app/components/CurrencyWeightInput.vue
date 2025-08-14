@@ -6,7 +6,7 @@
     </label>
     <div class="input-wrapper currency" :class="{ error }">
       <span class="currency-symbol">$</span>
-              <input 
+      <input 
         :id="inputId"
         v-model="displayValue"
         type="text" 
@@ -15,6 +15,8 @@
         inputmode="decimal"
         spellcheck="false"
         autocorrect="off"
+        @focus="onFocus"
+        @blur="onBlur"
       />
       <span class="input-unit">per {{ unitLabel }}</span>
     </div>
@@ -56,18 +58,30 @@ const LB_TO_KG_FACTOR = 2.20462
 // Unit label
 const unitLabel = computed(() => props.unit || 'unit')
 
+// While typing, keep raw input to avoid auto-formatting
+const isEditing = ref(false)
+const rawInput = ref('')
+
+// Helper: strip trailing zeros and unnecessary decimal point for nicer prefill on focus
+const toPlainString = (num: number): string => {
+  const s = String(num)
+  return s.includes('.') ? s.replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1') : s
+}
+
 // Display value computed property
 const displayValue = computed({
   get: () => {
+    if (isEditing.value) return rawInput.value
     const value = props.modelValue
     if (!value) return ''
     
-    // Show value based on current unit selection
-    if (props.unit === 'kg') return value.toString()
-    if (props.unit === 'lb') return (value / LB_TO_KG_FACTOR).toFixed(4)
-    return value.toString() // fallback if no unit selected
+    // Show value based on current unit selection (non-editing view)
+    if (props.unit === 'kg') return toPlainString(value)
+    if (props.unit === 'lb') return toPlainString(value / LB_TO_KG_FACTOR)
+    return toPlainString(value) // fallback if no unit selected
   },
   set: (newValue: string) => {
+    rawInput.value = newValue
     if (!newValue || newValue.trim() === '') {
       emit('update:modelValue', null)
       return
@@ -95,6 +109,25 @@ watch(() => props.unit, () => {
     displayValue.value = displayValue.value
   }
 })
+
+// Focus/blur handlers to control editing state
+const onFocus = () => {
+  isEditing.value = true
+  const value = props.modelValue
+  if (value === null || value === undefined) {
+    rawInput.value = ''
+    return
+  }
+  if (props.unit === 'lb') {
+    rawInput.value = toPlainString(value / LB_TO_KG_FACTOR)
+  } else {
+    rawInput.value = toPlainString(value)
+  }
+}
+
+const onBlur = () => {
+  isEditing.value = false
+}
 </script>
 
 <style scoped>

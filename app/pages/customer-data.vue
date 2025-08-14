@@ -27,84 +27,33 @@
       </div>
     </div>
 
-    <!-- Company Name Input -->
-    <div class="company-section">
-      <h2 class="section-title">
-        <i class="pi pi-building"></i>
-        Company Information
-      </h2>
-      <div class="company-input-group">
-        <label class="company-label">
-          Company Name
-          <span class="company-hint">Your company name for the report</span>
-        </label>
-        <input 
-          v-model="customerData.companyName" 
-          type="text" 
-          class="company-input"
-          placeholder="Enter your company name"
-          inputmode="text"
-          spellcheck="false"
-          autocapitalize="words"
-          autocorrect="off"
-        >
-      </div>
-    </div>
-
-    <!-- Input Section using extracted component -->
-    <div class="input-section">
-      <h2 class="section-title">
-        <i class="pi pi-pencil"></i>
-        Production & Downtime Data
-      </h2>
-      
-      <RoiInputForm
+      <!-- Input Section using shared Step component -->
+      <Step1CustomerInfo
         :inputs="roiInputs"
         :machines-terminology="machinesTerminology"
         :weight-unit="weightUnit"
+        :show-company-info="true"
+        :company-name="customerData.companyName"
+        v-model:show-errors="showErrors"
         @update:inputs="onUpdateInputs"
         @update:machines-terminology="machinesTerminology = $event"
         @update:weight-unit="weightUnit = $event"
+        @update:company-name="customerData.companyName = $event"
+      >
+        <template #downtime>
+          <DowntimeImpact :calculations="liveCalculations" :weight-unit="weightUnit" />
+        </template>
+      </Step1CustomerInfo>
+
+      <!-- Company Name Input is now rendered inside Step1CustomerInfo via show-company-info -->
+
+      <!-- Export action bar component -->
+      <ExportActionBar
+        :can-export="canCalculate"
+        :is-exporting="isExporting"
+        @export="exportToPDF"
+        @attempt="onExportAttempt"
       />
-
-      
-    </div>
-
-    <!-- Only Downtime Impact on this page as its own card -->
-    <DowntimeImpact :calculations="liveCalculations" :weight-unit="weightUnit" />
-
-    <!-- Enhanced export action bar -->
-    <div class="export-action-bar">
-      <div class="export-container">
-        <div class="export-info">
-          <h3 class="export-title">Ready to Export</h3>
-          <p class="export-description">Generate a professional PDF summary for our sales team</p>
-        </div>
-        <button 
-          @click="exportToPDF" 
-          class="export-btn-enhanced"
-          :disabled="!canCalculate || isExporting"
-        >
-          <div class="btn-content">
-            <div class="btn-icon">
-              <div v-if="isExporting" class="spinner"></div>
-              <ClientOnly v-else>
-                <i class="pi pi-file-pdf" aria-hidden="true"></i>
-              </ClientOnly>
-            </div>
-            <div class="btn-text">
-              <span class="btn-label">{{ isExporting ? 'Generating...' : 'Export PDF' }}</span>
-              <span class="btn-subtitle">Customer Summary</span>
-            </div>
-          </div>
-          <div class="btn-arrow">
-            <ClientOnly>
-              <i class="pi pi-download" aria-hidden="true"></i>
-            </ClientOnly>
-          </div>
-        </button>
-      </div>
-      </div>
     </div>
   </div>
 </template>
@@ -113,6 +62,8 @@
 import { ref, computed, reactive } from 'vue'
 // Components
 import DowntimeImpact from '../components/DowntimeImpact.vue'
+import Step1CustomerInfo from '../components/Step1CustomerInfo.vue'
+import ExportActionBar from '../components/ExportActionBar.vue'
 
 // Page meta - no auth required, accessible to everyone (handled by global middleware)
 definePageMeta({
@@ -155,8 +106,9 @@ const roiInputs = reactive({
 
 // State
 const machinesTerminology = ref('scope')
-const weightUnit = ref('')
-const showResults = ref(true)
+const weightUnit = ref('lb')
+const showErrors = ref(false)
+// Export state for customer PDF
 const isExporting = ref(false)
 const liveCalculations = computed(() => {
   const input = roiInputs
@@ -165,7 +117,7 @@ const liveCalculations = computed(() => {
   const unplannedMaintenanceEvents = input.unplannedMaintenanceEvents || 0
   const plannedDowntimeDurationPerEvent = input.plannedDowntimeDurationPerEvent || 0
   const unplannedDowntimeDurationPerEvent = input.unplannedDowntimeDurationPerEvent || 0
-  const productionDaysPerYear = input.productionDaysPerYear || 0
+  const _productionDaysPerYear = input.productionDaysPerYear || 0
   const productionHoursPerDay = input.productionHoursPerDay || 0
   const dailyOutputKg = input.dailyOutputKg || 0
   const salesPricePerKg = input.salesPricePerKg || 0
@@ -205,21 +157,6 @@ const liveCalculations = computed(() => {
   }
 })
 
-// Computed labels
-const machinesLabel = computed(() => {
-  return machinesTerminology.value === 'scope' ? 'Machines in Scope' : 'Machines in Operation'
-})
-
-const dailyOutputLabel = computed(() => {
-  return machinesTerminology.value === 'scope' 
-    ? 'Daily Output of machines in scope' 
-    : 'Daily output of machines in operation'
-})
-
-const weightUnitLabel = computed(() => {
-  return weightUnit.value === 'lb' ? 'lb' : 'kg'
-})
-
 // Validation (allow 0 values; only require non-null numbers and non-empty company name)
 const isNumberSet = (v) => v !== null && v !== undefined && !Number.isNaN(v)
   const canCalculate = computed(() => {
@@ -238,10 +175,6 @@ const isNumberSet = (v) => v !== null && v !== undefined && !Number.isNaN(v)
   )
 })
 
-// Unit conversion helpers
-const kgToLb = (kg) => kg * 2.20462
-const lbToKg = (lb) => lb / 2.20462
-
 // No manual calculate action needed; values are live via computed
 
 // Handlers
@@ -249,142 +182,129 @@ const onUpdateInputs = (updated) => {
   Object.assign(roiInputs, updated)
 }
 
-// PDF Export (Customer Summary – corporate styling)
+// Trigger validation UI when disabled export is clicked
+const onExportAttempt = () => {
+  showErrors.value = true
+  // Scroll to first invalid field inside the ROI form
+  nextTick(() => {
+    const firstInvalid = document.querySelector('.input-wrapper.error, .input-wrapper[aria-invalid="true"]')
+      || document.querySelector('.input-wrapper')
+    if (firstInvalid && 'scrollIntoView' in firstInvalid) {
+      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  })
+}
+
+// PDF Export for Customer Data only
 const exportToPDF = async () => {
-  if (!canCalculate.value) return
-
+  if (isExporting.value || !canCalculate.value) return
+  if (typeof window === 'undefined') return
   isExporting.value = true
-
   try {
-    if (process.server) return
-    const { default: jsPDF } = await import('jspdf')
-    const { default: autoTable } = await import('jspdf-autotable')
-    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' })
+    const jsPDF = (await import('jspdf')).default
+    const autoTable = (await import('jspdf-autotable')).default
 
-    // Colors
-    const buhler = [0, 155, 145]
-    const dark = [30, 41, 59]
-    const mid = [100, 116, 139]
-    const bg = [248, 250, 252]
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
 
-    // Branded header bar
-    doc.setFillColor(...buhler)
-    doc.rect(0, 0, 210, 22, 'F')
+    const buhlerGreen = [0, 155, 145]
+    const darkGray = [30, 41, 59]
+    const lightGray = [100, 116, 139]
+    const backgroundColor = [248, 250, 252]
+
+    // Header
+    doc.setFillColor(...buhlerGreen)
+    doc.rect(0, 0, 210, 25, 'F')
     doc.setTextColor(255, 255, 255)
-    doc.setFontSize(20)
-    doc.text('Bühler BRAM Calculator', 20, 14)
-    doc.setFontSize(12)
-    doc.text('Customer Summary', 20, 19)
+    doc.setFontSize(22)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Customer Data Summary', 20, 16)
 
     // Meta
-    let yPos = 34
-    doc.setTextColor(...dark)
-    doc.setFontSize(14)
-    doc.text(`Company: ${customerData.companyName}`, 20, yPos)
-    yPos += 8
-    doc.setFontSize(10)
-    doc.setTextColor(...mid)
-    doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, yPos)
-    yPos += 8
+    let y = 36
+    doc.setTextColor(...darkGray)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(12)
+    doc.text(`Company: ${customerData.companyName}`, 20, y)
+    y += 7
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 20, y)
 
-    // Section: Input Parameters
-    doc.setTextColor(...buhler)
-    doc.setFontSize(15)
-    doc.text('Input Parameters', 20, yPos)
-    yPos += 4
-
-    const inputData = [
-      [machinesLabel.value, (roiInputs.machinesInOperation ?? 0).toString()],
-      ['Production Days per Year', (roiInputs.productionDaysPerYear ?? 0).toString()],
-      ['Production Hours per Day', (roiInputs.productionHoursPerDay ?? 0).toString()],
-      [dailyOutputLabel.value, `${formatNumber(weightUnit.value === 'lb' ? kgToLb(roiInputs.dailyOutputKg ?? 0) : (roiInputs.dailyOutputKg ?? 0))} ${weightUnitLabel.value}`],
-      [`Sales Price per ${weightUnitLabel.value}`, formatCurrency(roiInputs.salesPricePerKg ?? 0)],
-      ['Margin', `${(roiInputs.marginPercent ?? 0).toFixed?.(1) ?? Number(roiInputs.marginPercent ?? 0).toFixed(1)}%`],
-      ['Planned Maintenance Events/Year', (roiInputs.plannedMaintenanceEvents ?? 0).toString()],
-      ['Planned Downtime Duration/Event', `${roiInputs.plannedDowntimeDurationPerEvent ?? 0} hrs`],
-      ['Unplanned Maintenance Events/Year', (roiInputs.unplannedMaintenanceEvents ?? 0).toString()],
-      ['Unplanned Downtime Duration/Event', `${roiInputs.unplannedDowntimeDurationPerEvent ?? 0} hrs`]
-    ]
-
+    // Inputs table
+    y += 10
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...buhlerGreen)
+    doc.text('Input Parameters', 20, y)
+    y += 4
     autoTable(doc, {
-      startY: yPos + 2,
-      head: [['Parameter', 'Value']],
-      body: inputData,
+      startY: y,
+      head: [['Parameter', 'Value', 'Unit']],
+      body: [
+        ['Machines in Scope', String(roiInputs.machinesInOperation || 0), 'units'],
+        ['Production Days per Year', String(roiInputs.productionDaysPerYear || 0), 'days'],
+        ['Production Hours per Day', String(roiInputs.productionHoursPerDay || 0), 'hours'],
+        ['Daily Output', String(roiInputs.dailyOutputKg || 0), 'kg'],
+        ['Planned Maintenance Events/Year', String(roiInputs.plannedMaintenanceEvents || 0), 'events'],
+        ['Unplanned Maintenance Events/Year', String(roiInputs.unplannedMaintenanceEvents || 0), 'events'],
+        ['Planned Downtime Duration per Event', String(roiInputs.plannedDowntimeDurationPerEvent || 0), 'hours'],
+        ['Unplanned Downtime Duration per Event', String(roiInputs.unplannedDowntimeDurationPerEvent || 0), 'hours'],
+        ['Sales Price per kg', `$${(roiInputs.salesPricePerKg || 0).toFixed(2)}`, 'per kg'],
+        ['Margin', `${(roiInputs.marginPercent || 0).toFixed(1)}%`, 'percent']
+      ],
       theme: 'grid',
-      headStyles: { fillColor: buhler, textColor: [255, 255, 255], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: bg },
-      styles: { fontSize: 10, textColor: dark },
-      columnStyles: { 0: { cellWidth: 100 } }
+      headStyles: { fillColor: buhlerGreen, textColor: [255, 255, 255], fontSize: 11, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 10, textColor: darkGray },
+      alternateRowStyles: { fillColor: backgroundColor },
+      margin: { left: 20, right: 20 }
     })
 
-    // Section: Downtime Impact
-    const afterInputsY = doc && doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY + 10 : yPos + 40
-    doc.setTextColor(...buhler)
-    doc.setFontSize(15)
-    doc.text('Downtime Impact', 20, afterInputsY)
-
+    // Downtime snapshot (from liveCalculations)
     const calc = liveCalculations.value
-    const downtimeData = [
-      ['Annual Planned Downtime', `${formatNumber(calc.annualPlannedDowntimeHours)} hrs`],
-      ['Annual Unplanned Downtime', `${formatNumber(calc.annualUnplannedDowntimeHours)} hrs`],
-      ['Annual Production Loss (planned)', `${formatNumber(calc.annualPlannedProductionLoss)} ${weightUnitLabel.value}`],
-      ['Annual Production Loss (unplanned)', `${formatNumber(calc.annualUnplannedProductionLoss)} ${weightUnitLabel.value}`],
-      ['Annual Financial Loss (planned)', formatCurrency(calc.annualPlannedRevenueLoss)],
-      ['Annual Financial Loss (unplanned)', formatCurrency(calc.annualUnplannedRevenueLoss)],
-      ['Total Production Loss', `${formatNumber(calc.annualProductionLoss)} ${weightUnitLabel.value}`],
-      ['Total Financial Loss', formatCurrency(calc.annualRevenueLoss)]
-    ]
-
+    y = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY + 10 : y + 10
+    doc.setFontSize(16)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(...buhlerGreen)
+    doc.text('Downtime Impact Snapshot', 20, y)
+    y += 4
     autoTable(doc, {
-      startY: afterInputsY + 2,
-      head: [['Metric', 'Value']],
-      body: downtimeData,
-      theme: 'striped',
-      headStyles: { fillColor: buhler, textColor: [255, 255, 255], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: bg },
-      styles: { fontSize: 10, textColor: dark },
-      columnStyles: { 0: { cellWidth: 100 } }
+      startY: y,
+      head: [['Metric', 'Annual Value']],
+      body: [
+        ['Planned Downtime', `${Math.round(calc.annualPlannedDowntimeHours)} hours`],
+        ['Unplanned Downtime', `${Math.round(calc.annualUnplannedDowntimeHours)} hours`],
+        ['Total Downtime Hours', `${Math.round(calc.annualDowntimeHours)} hours`],
+        ['Total Production Loss', `${Math.round(calc.annualProductionLoss)} kg`],
+        ['Total Financial Loss', `$${Math.round(calc.annualRevenueLoss).toLocaleString('en-US')}`]
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: lightGray, textColor: [255, 255, 255], fontSize: 11, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 10, textColor: darkGray },
+      margin: { left: 20, right: 20 }
     })
 
-    // Footer bar
-    const pageCount = doc.getNumberOfPages ? doc.getNumberOfPages() : 1
-    for (let i = 1; i <= pageCount; i++) {
+    // Footer
+    const pages = doc.internal.getNumberOfPages()
+    for (let i = 1; i <= pages; i++) {
       doc.setPage(i)
-      doc.setFillColor(...buhler)
-      doc.rect(0, 285, 210, 10, 'F')
+      doc.setFillColor(...buhlerGreen)
+      doc.rect(0, 285, 210, 12, 'F')
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(9)
-      doc.text('Bühler BRAM Calculator - Customer Summary', 20, 291)
-      doc.text(`Page ${i} of ${pageCount}`, 170, 291)
+      doc.setFont('helvetica', 'normal')
+      doc.text('Customer Data Export - Bühler BRAM', 20, 292)
+      doc.text(`Page ${i} of ${pages}`, 170, 292)
     }
 
-    const fileName = `${customerData.companyName.replace(/[^a-z0-9]/gi, '_')}_Customer_Summary.pdf`
-    doc.save(fileName)
-
-  } catch (error) {
-    console.error('PDF export error:', error)
-    alert('Error generating PDF. Please try again.')
+    const filename = `Buhler-Customer-Data-${new Date().toISOString().split('T')[0]}.pdf`
+    doc.save(filename)
+  } catch (e) {
+    console.error('Customer PDF export failed:', e)
+    alert('PDF export failed. Please try again.')
   } finally {
     isExporting.value = false
   }
 }
 
-// Formatting helpers
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
-}
-
-const formatNumber = (value) => {
-  return new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
-}
+// (no extra formatting helpers needed here)
 </script>
 
 <style scoped>

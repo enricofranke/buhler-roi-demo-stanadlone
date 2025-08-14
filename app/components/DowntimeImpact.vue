@@ -1,82 +1,101 @@
 <template>
-<div class="downtime-card">
-    <h4 class="section-header">Downtime Impact</h4>
+  <div class="downtime-card">
+    <div class="impact-grid">
+      <!-- Planned Column -->
+      <div class="impact-column">
+        <h4 class="section-header">Downtime Impact (Planned Downtime)</h4>
 
-    <!-- Downtime Hours -->
-    <div class="results-grid">
-      <div class="metric-card warning">
-        <div class="metric-icon">
-          <i class="pi pi-calendar" aria-hidden="true"></i>
+        <!-- Planned Downtime Hours -->
+        <div class="metric-card warning">
+          <div class="metric-icon">
+            <ClientOnly>
+              <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            </ClientOnly>
+          </div>
+          <div class="metric-content">
+            <span class="metric-label">Annual Planned Downtime</span>
+            <span class="metric-value">{{ formatNumber(calculations.annualPlannedDowntimeHours) }}</span>
+            <span class="metric-sublabel">Hours per year</span>
+          </div>
         </div>
-        <div class="metric-content">
-          <span class="metric-label">Annual Planned Downtime</span>
-          <span class="metric-value">{{ formatNumber(calculations.annualPlannedDowntimeHours) }}</span>
-          <span class="metric-sublabel">Hours per year</span>
+
+        <!-- Planned Production Loss -->
+        <div class="metric-card warning">
+          <div class="metric-icon">
+            <ClientOnly>
+              <i class="pi pi-balance-scale" aria-hidden="true"></i>
+            </ClientOnly>
+          </div>
+          <div class="metric-content">
+            <span class="metric-label">Annual Production Loss</span>
+            <span class="metric-sublabel-top">(Through planned downtime)</span>
+            <span class="metric-value">{{ formatNumber(calculations.annualPlannedProductionLoss) }}</span>
+            <span class="metric-sublabel">{{ weightUnitLabel }} lost per year</span>
+          </div>
+        </div>
+
+        <!-- Planned Financial Loss -->
+        <div class="metric-card warning">
+          <div class="metric-icon">
+            <ClientOnly>
+              <i class="pi pi-dollar" aria-hidden="true"></i>
+            </ClientOnly>
+          </div>
+          <div class="metric-content">
+            <span class="metric-label">Annual Financial Loss</span>
+            <span class="metric-sublabel-top">(Through planned downtime)</span>
+            <span class="metric-value">{{ formatCurrency(calculations.annualPlannedRevenueLoss) }}</span>
+            <span class="metric-sublabel">Revenue lost annually</span>
+          </div>
         </div>
       </div>
 
-      <div class="metric-card danger">
-        <div class="metric-icon">
-          <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
-        </div>
-        <div class="metric-content">
-          <span class="metric-label">Annual Unplanned Downtime</span>
-          <span class="metric-value">{{ formatNumber(calculations.annualUnplannedDowntimeHours) }}</span>
-          <span class="metric-sublabel">Hours per year</span>
-        </div>
-      </div>
-    </div>
+      <!-- Unplanned Column -->
+      <div class="impact-column">
+        <h4 class="section-header">Downtime Impact (Unplanned Downtime)</h4>
 
-    <!-- Production Loss -->
-    <div class="results-grid">
-      <div class="metric-card info">
-        <div class="metric-icon">
-          <i class="pi pi-box" aria-hidden="true"></i>
+        <!-- Unplanned Downtime Hours -->
+        <div class="metric-card danger">
+          <div class="metric-icon">
+            <ClientOnly>
+              <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+            </ClientOnly>
+          </div>
+          <div class="metric-content">
+            <span class="metric-label">Annual Unplanned Downtime</span>
+            <span class="metric-value">{{ formatNumber(calculations.annualUnplannedDowntimeHours) }}</span>
+            <span class="metric-sublabel">Hours per year</span>
+          </div>
         </div>
-        <div class="metric-content">
-          <span class="metric-label">Annual Production Loss</span>
-          <span class="metric-sublabel-top">(Through planned downtime)</span>
-          <span class="metric-value">{{ formatNumber(calculations.annualPlannedProductionLoss) }}</span>
-          <span class="metric-sublabel">{{ weightUnitLabel }} lost per year</span>
-        </div>
-      </div>
 
-      <div class="metric-card info">
-        <div class="metric-icon">
-          <i class="pi pi-box" aria-hidden="true"></i>
+        <!-- Unplanned Production Loss -->
+        <div class="metric-card danger">
+          <div class="metric-icon">
+            <ClientOnly>
+              <i class="pi pi-balance-scale" aria-hidden="true"></i>
+            </ClientOnly>
+          </div>
+          <div class="metric-content">
+            <span class="metric-label">Annual Production Loss</span>
+            <span class="metric-sublabel-top">(Through unplanned downtime)</span>
+            <span class="metric-value">{{ formatNumber(calculations.annualUnplannedProductionLoss) }}</span>
+            <span class="metric-sublabel">{{ weightUnitLabel }} lost per year</span>
+          </div>
         </div>
-        <div class="metric-content">
-          <span class="metric-label">Annual Production Loss</span>
-          <span class="metric-sublabel-top">(Through unplanned downtime)</span>
-          <span class="metric-value">{{ formatNumber(calculations.annualUnplannedProductionLoss) }}</span>
-          <span class="metric-sublabel">{{ weightUnitLabel }} lost per year</span>
-        </div>
-      </div>
-    </div>
 
-    <!-- Financial Loss -->
-    <div class="results-grid">
-      <div class="metric-card warning">
-        <div class="metric-icon">
-          <i class="pi pi-dollar" aria-hidden="true"></i>
-        </div>
-        <div class="metric-content">
-          <span class="metric-label">Annual Financial Loss</span>
-          <span class="metric-sublabel-top">(Through planned downtime)</span>
-          <span class="metric-value">{{ formatCurrency(calculations.annualPlannedRevenueLoss) }}</span>
-          <span class="metric-sublabel">Revenue lost annually</span>
-        </div>
-      </div>
-
-      <div class="metric-card danger">
-        <div class="metric-icon">
-          <i class="pi pi-dollar" aria-hidden="true"></i>
-        </div>
-        <div class="metric-content">
-          <span class="metric-label">Annual Financial Loss</span>
-          <span class="metric-sublabel-top">(Through unplanned downtime)</span>
-          <span class="metric-value">{{ formatCurrency(calculations.annualUnplannedRevenueLoss) }}</span>
-          <span class="metric-sublabel">Revenue lost annually</span>
+        <!-- Unplanned Financial Loss -->
+        <div class="metric-card danger">
+          <div class="metric-icon">
+            <ClientOnly>
+              <i class="pi pi-dollar" aria-hidden="true"></i>
+            </ClientOnly>
+          </div>
+          <div class="metric-content">
+            <span class="metric-label">Annual Financial Loss</span>
+            <span class="metric-sublabel-top">(Through unplanned downtime)</span>
+            <span class="metric-value">{{ formatCurrency(calculations.annualUnplannedRevenueLoss) }}</span>
+            <span class="metric-sublabel">Revenue lost annually</span>
+          </div>
         </div>
       </div>
     </div>
@@ -135,12 +154,20 @@ const formatNumber = (value: number): string => {
   margin: 0 0 1rem 0;
 }
 
-.results-grid {
+/* Two-column layout */
+.impact-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(2, minmax(280px, 1fr));
+  gap: 2rem;
 }
+
+.impact-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Old grid removed; columns handle spacing */
 
 .metric-card {
   display: flex;
@@ -164,7 +191,6 @@ const formatNumber = (value: number): string => {
 
 .metric-card.warning .metric-icon { background: rgba(251,146,60,0.1); color: #fb923c; }
 .metric-card.danger  .metric-icon { background: rgba(239,68,68,0.1);  color: #ef4444; }
-.metric-card.info    .metric-icon { background: rgba(59,130,246,0.1); color: #3b82f6; }
 
 .metric-content { flex: 1; display: flex; flex-direction: column; gap: 0.25rem; }
 .metric-label { font-size: 0.875rem; color: #64748b; font-weight: 500; }
@@ -178,9 +204,9 @@ const formatNumber = (value: number): string => {
     padding: 1.5rem;
   }
   
-  .results-grid {
+  .impact-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 1.5rem;
   }
   
   .metric-card {
@@ -196,7 +222,7 @@ const formatNumber = (value: number): string => {
   
   .section-header {
     font-size: 1.125rem;
-    text-align: center;
+    text-align: left;
   }
   
   .metric-card {

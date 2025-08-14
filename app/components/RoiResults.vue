@@ -33,7 +33,7 @@
       <div class="results-grid">
         <div class="metric-card info">
           <div class="metric-icon">
-            <i class="pi pi-box" aria-hidden="true"></i>
+            <i class="pi pi-balance-scale" aria-hidden="true"></i>
           </div>
           <div class="metric-content">
             <span class="metric-label">Annual Production Loss</span>
@@ -45,7 +45,7 @@
 
         <div class="metric-card info">
           <div class="metric-icon">
-            <i class="pi pi-box" aria-hidden="true"></i>
+            <i class="pi pi-balance-scale" aria-hidden="true"></i>
           </div>
           <div class="metric-content">
             <span class="metric-label">Annual Production Loss</span>
@@ -100,7 +100,7 @@
 
           <div class="metric-card total-card">
             <div class="metric-icon">
-              <i class="pi pi-box" aria-hidden="true"></i>
+              <i class="pi pi-balance-scale" aria-hidden="true"></i>
             </div>
             <div class="metric-content">
               <span class="metric-label">Total Production Loss</span>
